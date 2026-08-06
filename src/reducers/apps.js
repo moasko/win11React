@@ -25,24 +25,7 @@ defState.hz = 2;
 
 const appReducer = (state = defState, action) => {
   var tmpState = { ...state };
-  if (action.type == "EDGELINK") {
-    var obj = { ...tmpState["edge"] };
-    if (action.payload && action.payload.startsWith("http")) {
-      obj.url = action.payload;
-    } else if (action.payload && action.payload.length != 0) {
-      obj.url = "https://www.bing.com/search?q=" + action.payload;
-    } else {
-      obj.url = null;
-    }
-
-    obj.size = "full";
-    obj.hide = false;
-    obj.max = true;
-    tmpState.hz += 1;
-    obj.z = tmpState.hz;
-    tmpState["edge"] = obj;
-    return tmpState;
-  } else if (action.type == "SHOWDSK") {
+  if (action.type == "SHOWDSK") {
     var keys = Object.keys(tmpState);
 
     for (var i = 0; i < keys.length; i++) {

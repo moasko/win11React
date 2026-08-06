@@ -17,8 +17,8 @@ const defState = {
     },
   },
   person: {
-    name: "Blue Edge",
-    theme: "light",
+    name: "CompanyOS",
+    theme: "dark",
     color: "blue",
   },
   devices: {

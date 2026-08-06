@@ -11,7 +11,6 @@ import {
   DesktopApp,
   SidePane,
   StartMenu,
-  WidPane,
 } from "./components/start";
 import Taskbar from "./components/taskbar";
 import { Background, BootScreen, LockScreen } from "./containers/background";
@@ -19,50 +18,25 @@ import { Background, BootScreen, LockScreen } from "./containers/background";
 import { loadSettings } from "./actions";
 import * as Applications from "./containers/applications";
 import * as Drafts from "./containers/applications/draft";
+import { modules } from "./apps/registry";
+import { syncInstalledModules, detachAllModules } from "./apps/sync";
+import { api, getToken, clearToken } from "./api/client";
 
 function ErrorFallback({ error, resetErrorBoundary }) {
   return (
-    <div>
-      <meta charSet="UTF-8" />
-      <title>404 - Page</title>
-      <script src="https://win11.blueedge.me/script.js"></script>
-      <link rel="stylesheet" href="https://win11.blueedge.me/style.css" />
-      {/* partial:index.partial.html */}
-      <div id="page">
-        <div id="container">
-          <h1>:(</h1>
-          <h2>
-            Your PC ran into a problem and needs to restart. We're just
-            collecting some error info, and then we'll restart for you.
-          </h2>
-          <h2>
-            <span id="percentage">0</span>% complete
-          </h2>
-          <div id="details">
-            <div id="qr">
-              <div id="image">
-                <img src="https://win11.blueedge.me/img/qr.png" alt="QR Code" />
-              </div>
-            </div>
-            <div id="stopcode">
-              <h4>
-                For more information about this issue and possible fixes, visit
-                <br />{" "}
-                <a href="https://github.com/blueedgetechno/win11React/issues">
-                  https://github.com/blueedgetechno/win11React/issues
-                </a>{" "}
-              </h4>
-              <h5>
-                If you call a support person, give them this info:
-                <br />
-                Stop Code: {error.message}
-              </h5>
-              <button onClick={resetErrorBoundary}>Try again</button>
-            </div>
-          </div>
+    <div className="crashScreen">
+      <div className="crashCont">
+        <h1>:(</h1>
+        <h2>
+          CompanyOS a rencontré un problème et doit redémarrer la session. Vos
+          données ouvertes ne sont pas perdues.
+        </h2>
+        <div className="stopcode">
+          <h4>Code d'arrêt</h4>
+          <pre>{error.message}</pre>
+          <button onClick={resetErrorBoundary}>Redémarrer la session</button>
         </div>
       </div>
-      {/* partial */}
     </div>
   );
 }
@@ -70,6 +44,7 @@ function ErrorFallback({ error, resetErrorBoundary }) {
 function App() {
   const apps = useSelector((state) => state.apps);
   const wall = useSelector((state) => state.wallpaper);
+  const session = useSelector((state) => state.session);
   const dispatch = useDispatch();
 
   const afterMath = (event) => {
@@ -77,7 +52,6 @@ function App() {
       ["START", "STARTHID"],
       ["BAND", "BANDHIDE"],
       ["PANE", "PANEHIDE"],
-      ["WIDG", "WIDGHIDE"],
       ["CALN", "CALNHIDE"],
       ["MENU", "MENUHIDE"],
     ];
@@ -126,6 +100,38 @@ function App() {
     dispatch({ type: "WALLBOOTED" });
   };
 
+  // Restauration de session : un jeton valide en localStorage remet
+  // l'espace de travail et ses modules en place, écran verrouillé ou non.
+  useEffect(() => {
+    const boot = async () => {
+      if (!getToken()) {
+        dispatch({ type: "SESSION_CLEAR" });
+        return;
+      }
+      try {
+        const me = await api.me();
+        dispatch({ type: "SESSION_SET", payload: me });
+        dispatch({
+          type: "STNGSETV",
+          payload: { path: "person.name", value: me.user.name },
+        });
+        await syncInstalledModules();
+      } catch {
+        clearToken();
+        dispatch({ type: "SESSION_CLEAR" });
+        detachAllModules();
+      }
+    };
+    boot();
+  }, []);
+
+  // Sans session, pas de bureau : on revient à l'écran de connexion.
+  useEffect(() => {
+    if (session.status === "anonymous" && !wall.locked) {
+      dispatch({ type: "WALLALOCK" });
+    }
+  }, [session.status, wall.locked]);
+
   useEffect(() => {
     if (!window.onstart) {
       loadSettings();
@@ -149,6 +155,12 @@ function App() {
               var WinApp = Applications[key];
               return <WinApp key={idx} />;
             })}
+            {/* Modules métier : ModuleWindow ne rend rien tant que le
+                module n'est pas installé dans l'espace de travail. */}
+            {modules.map((mod) => {
+              const ModWindow = mod.Window;
+              return <ModWindow key={mod.slug} />;
+            })}
             {Object.keys(apps)
               .filter((x) => x != "hz")
               .map((key) => apps[key])
@@ -161,7 +173,6 @@ function App() {
             <StartMenu />
             <BandPane />
             <SidePane />
-            <WidPane />
             <CalnWid />
           </div>
           <Taskbar />

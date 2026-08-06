@@ -9,7 +9,6 @@ import "./sidepane.scss";
 import "./startmenu.scss";
 
 export * from "./start";
-export * from "./widget";
 
 export const DesktopApp = () => {
   const deskApps = useSelector((state) => {
@@ -91,10 +90,10 @@ export const BandPane = () => {
         <Icon
           className="hvlight"
           width={17}
-          click="SPOTIFY"
+          click="TERMINAL"
           payload="togg"
           open="true"
-          src="spotify"
+          src="terminal"
         />
         <Icon
           className="hvlight"
@@ -298,7 +297,7 @@ export const CalnWid = () => {
     >
       <div className="topBar pl-4 text-sm">
         <div className="date">
-          {new Date().toLocaleDateString(undefined, {
+          {new Date().toLocaleDateString("fr-FR", {
             weekday: "long",
             month: "long",
             day: "numeric",

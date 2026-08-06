@@ -1,4 +1,3 @@
-import axios from "axios";
 import store from "../reducers";
 import { dfApps } from "../utils";
 import { gene_name } from "../utils/apps";
@@ -187,51 +186,6 @@ export const changeTheme = () => {
   store.dispatch({ type: "WALLSET", payload: thm == "light" ? 0 : 1 });
 };
 
-const loadWidget = async () => {
-  var tmpWdgt = {
-      ...store.getState().widpane,
-    },
-    date = new Date();
-
-  // console.log('fetching ON THIS DAY');
-  var wikiurl = "https://en.wikipedia.org/api/rest_v1/feed/onthisday/events";
-  await axios
-    .get(`${wikiurl}/${date.getMonth()}/${date.getDay()}`)
-    .then((res) => res.data)
-    .then((data) => {
-      var event = data.events[Math.floor(Math.random() * data.events.length)];
-      date.setYear(event.year);
-
-      tmpWdgt.data.date = date.toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-      });
-
-      tmpWdgt.data.event = event;
-    })
-    .catch((error) => {});
-
-  // console.log('fetching NEWS');
-  await axios
-    .get("https://github.win11react.com/api-cache/news.json")
-    .then((res) => res.data)
-    .then((data) => {
-      var newsList = [];
-      data["articles"].forEach((e) => {
-        e.title = e["title"].split(`-`).slice(0, -1).join(`-`).trim();
-        newsList.push(e);
-      });
-      tmpWdgt.data.news = newsList;
-    })
-    .catch((error) => {});
-
-  store.dispatch({
-    type: "WIDGREST",
-    payload: tmpWdgt,
-  });
-};
-
 export const loadSettings = () => {
   var sett = localStorage.getItem("setting") || "{}";
   sett = JSON.parse(sett);
@@ -249,9 +203,6 @@ export const loadSettings = () => {
   if (sett.person.theme != "light") changeTheme();
 
   store.dispatch({ type: "SETTLOAD", payload: sett });
-  if (import.meta.env.MODE != "development") {
-    loadWidget();
-  }
 };
 
 // mostly file explorer

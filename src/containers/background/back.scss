@@ -112,6 +112,7 @@
     color: #fff;
     border: 2px solid transparent;
     border-radius: 4px;
+    cursor: pointer;
 
     &:hover {
       border: 2px solid rgba(255, 255, 255, 0.33);
@@ -120,6 +121,40 @@
     &:active {
       border: 2px solid transparent;
       background: rgba(255, 255, 255, 0.33);
+    }
+  }
+
+  .authForm {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 280px;
+
+    input {
+      width: 100%;
+      margin-top: 8px;
+      padding: 8px 12px;
+      font-size: 13px;
+      color: #fff;
+      background: rgba(255, 255, 255, 0.14);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      border-radius: 4px;
+      backdrop-filter: blur(8px);
+
+      &::placeholder {
+        color: rgba(255, 255, 255, 0.6);
+      }
+
+      &:focus {
+        border-color: rgba(255, 255, 255, 0.6);
+      }
+    }
+
+    .authError {
+      margin-top: 10px;
+      font-size: 12px;
+      color: #ffb4b4;
+      text-align: center;
     }
   }
 }

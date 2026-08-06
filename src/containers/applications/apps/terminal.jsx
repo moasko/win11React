@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import i18next from "i18next";
-import login from "../../../components/login";
 import { installApp, delApp } from "../../../actions";
 
 import { Icon, ToolBar } from "../../../utils/general";
@@ -9,7 +8,7 @@ import dirs from "./assets/dir.json";
 
 export const WnTerminal = () => {
   const wnapp = useSelector((state) => state.apps.terminal);
-  const [stack, setStack] = useState(["OS [Version 10.0.22000.51]", ""]);
+  const [stack, setStack] = useState(["CompanyOS [Version 0.1.0]", ""]);
   const [pwd, setPwd] = useState("C:\\Users\\Blue");
   const [lastCmd, setLsc] = useState(0);
   const [wntitle, setWntitle] = useState("Terminal");
@@ -247,8 +246,6 @@ export const WnTerminal = () => {
       if (errp) {
         tmpStack.push("The system cannot find the file specified.");
       }
-    } else if (type == "start") {
-      dispatch({ type: "EDGELINK", payload: arg });
     } else if (type == "date") {
       tmpStack.push("The current date is: " + new Date().toLocaleDateString());
     } else if (type == "time") {
@@ -265,33 +262,26 @@ export const WnTerminal = () => {
           Math.floor(Math.random() * 100),
       );
     } else if (type == "exit") {
-      tmpStack = ["OS [Version 10.0.22000.51]", ""];
+      tmpStack = ["CompanyOS [Version 0.1.0]", ""];
       dispatch({ type: wnapp.action, payload: "close" });
     } else if (type == "title") {
       setWntitle(arg.length ? arg : "Terminal");
     } else if (type == "hostname") {
-      tmpStack.push("blue");
-    } else if (type == "login") {
-      login();
-      tmpStack.push("started login");
+      tmpStack.push("companyos");
     } else if (type == "lang-test") {
       i18next.changeLanguage("fr-FR");
       tmpStack.push("French");
-    } else if (type == "blue") {
-      tmpStack.push("blueedgetechno");
-    } else if (type == "dev") {
-      tmpStack.push("https://dev.blueedge.me/");
     } else if (type == "ver") {
-      tmpStack.push("OS [Version 10.0.22000.51]");
+      tmpStack.push("CompanyOS [Version 0.1.0]");
     } else if (type == "systeminfo") {
       var dvInfo = [
-        "Host Name:                 BLUE",
-        "OS Name:                   Win11React Dummys Edition",
-        "OS Version:                10.0.22000 N/A Build 22000.51",
+        "Host Name:                 COMPANYOS",
+        "OS Name:                   CompanyOS Web Edition",
+        "OS Version:                0.1.0",
         "OS Manufacturer:           ",
         "OS Configuration:          Standalone Workstation",
         "OS Build Type:             Multiprocessor Free",
-        "Registered Owner:          Blue",
+        "Registered Owner:          CompanyOS",
         "Registered Organization:   N/A",
         "Product ID:                7H1S1-5AP1R-473DV-3R5I0N",
       ];

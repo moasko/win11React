@@ -1,0 +1,167 @@
+// Schéma CompanyOS — PostgreSQL.
+//
+// Modèle multi-tenant : un Tenant = un espace de travail (une entreprise).
+// Chaque table métier porte un tenantId, c'est la frontière d'isolation.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Plan {
+  FREE
+  PRO
+  ENTERPRISE
+}
+
+enum Role {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+enum NodeType {
+  FOLDER
+  FILE
+}
+
+enum AppKind {
+  NATIVE // module livré dans le shell CompanyOS
+  IFRAME // outil externe intégré dans une fenêtre
+}
+
+/// Un espace de travail. Créé à l'inscription, porte le quota et l'abonnement.
+model Tenant {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  plan      Plan     @default(FREE)
+  /// Quota de stockage alloué, en octets.
+  quota     BigInt
+  /// Octets réellement consommés. Tenu à jour dans la même transaction
+  /// que la création / suppression de fichiers.
+  usedBytes BigInt   @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users         User[]
+  nodes         FsNode[]
+  installations Installation[]
+  records       Record[]
+
+  @@map("tenants")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  tenantId     String
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         Role     @default(MEMBER)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  tenant        Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  nodes         FsNode[]
+  installations Installation[]
+
+  @@index([tenantId])
+  @@map("users")
+}
+
+/// Catalogue global des applications proposées dans la Boutique.
+/// Global, pas par tenant : c'est l'offre, pas les données d'un client.
+model App {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String
+  description String
+  /// Nom de l'icône dans public/img/icon, ou URL absolue.
+  icon        String
+  category    String
+  version     String   @default("1.0.0")
+  kind        AppKind  @default(NATIVE)
+  /// URL chargée dans la fenêtre pour les apps IFRAME.
+  url         String?
+  /// Une app "core" est présente d'office et ne peut pas être désinstallée.
+  isCore      Boolean  @default(false)
+  publishedAt DateTime @default(now())
+
+  installations Installation[]
+
+  @@map("apps")
+}
+
+/// Une app installée dans un espace de travail par un utilisateur.
+model Installation {
+  id          String   @id @default(cuid())
+  tenantId    String
+  userId      String
+  appId       String
+  /// Réglages propres à cette installation (clés API, préférences…).
+  settings    Json     @default("{}")
+  installedAt DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  app    App    @relation(fields: [appId], references: [id], onDelete: Cascade)
+
+  /// Une app n'est installée qu'une fois par espace de travail.
+  @@unique([tenantId, appId])
+  @@index([tenantId])
+  @@map("installations")
+}
+
+/// Données génériques des modules métier. Chaque app range ses
+/// enregistrements dans (module, collection) — ex. ("crm", "clients") —
+/// avec un document JSONB libre. Une nouvelle app n'exige donc aucune
+/// migration : elle choisit son couple module/collection et écrit.
+/// Quand un module mûrit, on le sort vers de vraies tables typées.
+model Record {
+  id         String   @id @default(cuid())
+  tenantId   String
+  userId     String
+  module     String
+  collection String
+  data       Json
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, module, collection])
+  @@map("records")
+}
+
+/// Arborescence de fichiers. Les octets vivent dans le stockage objet,
+/// cette table ne porte que les métadonnées et la clé de stockage.
+model FsNode {
+  id        String   @id @default(cuid())
+  tenantId  String
+  ownerId   String
+  parentId  String?
+  name      String
+  type      NodeType
+  /// Taille en octets. 0 pour un dossier.
+  size      BigInt   @default(0)
+  mimeType  String?
+  /// Clé dans le stockage objet. null pour un dossier.
+  storageKey String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant   Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  owner    User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  parent   FsNode?  @relation("FsNodeChildren", fields: [parentId], references: [id], onDelete: Cascade)
+  children FsNode[] @relation("FsNodeChildren")
+
+  /// Deux entrées ne peuvent pas porter le même nom dans le même dossier.
+  @@unique([tenantId, parentId, name])
+  @@index([tenantId, parentId])
+  @@map("fs_nodes")
+}

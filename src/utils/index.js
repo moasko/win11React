@@ -1,62 +1,41 @@
 import icons from "./apps";
 
+// Disposition par défaut du shell. Les modules installés depuis la Boutique
+// viennent s'ajouter au bureau dynamiquement (voir src/apps/sync.js).
 var { taskbar, desktop, pinned, recent } = {
   taskbar: (localStorage.getItem("taskbar") &&
     JSON.parse(localStorage.getItem("taskbar"))) || [
-    "Settings",
-    "File Explorer",
-    "Browser",
-    "Store",
-    "Spotify",
+    "Explorateur de fichiers",
+    "Boutique",
+    "Paramètres",
   ],
   desktop: (localStorage.getItem("desktop") &&
     JSON.parse(localStorage.getItem("desktop"))) || [
-    "Blue",
-    "Unescape",
-    "Recycle Bin",
-    "File Explorer",
-    "Store",
-    "Browser",
-    "Github",
-    "Spotify",
-    "Buy me a coffee",
+    "Explorateur de fichiers",
+    "Boutique",
+    "Terminal",
+    "Corbeille",
   ],
   pinned: (localStorage.getItem("pinned") &&
     JSON.parse(localStorage.getItem("pinned"))) || [
-    "Browser",
-    "Get Started",
-    "Task Manager",
-    "Mail",
-    "Settings",
-    "Store",
-    "Unescape",
-    "Buy me a coffee",
-    "Notepad",
-    "Whiteboard",
-    "Calculator",
-    "Spotify",
-    "Twitter",
-    "File Explorer",
+    "Explorateur de fichiers",
+    "Boutique",
+    "Paramètres",
+    "Gestionnaire de tâches",
     "Terminal",
-    "Github",
-    "Discord",
-    "Camera",
+    "Bloc-notes",
+    "Calculatrice",
   ],
   recent: (localStorage.getItem("recent") &&
     JSON.parse(localStorage.getItem("recent"))) || [
-    "Mail",
-    "Twitter",
+    "Explorateur de fichiers",
+    "Boutique",
+    "Paramètres",
     "Terminal",
-    "Github",
-    "File Explorer",
-    "Spotify",
-    "Edge",
+    "Bloc-notes",
+    "Calculatrice",
   ],
 };
-
-if (desktop.includes("Buy me a coffee") === false) {
-  desktop.push("Buy me a coffee");
-}
 
 export const taskApps = icons.filter((x) => taskbar.includes(x.name));
 

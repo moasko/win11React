@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Icon } from "../../utils/general";
 import Battery from "../shared/Battery";
@@ -71,15 +71,8 @@ const Taskbar = () => {
               <Icon
                 click="STARTSRC"
                 className="tsIcon searchIcon"
-                icon="taskSearch"
-              />
-            ) : null}
-            {tasks.widgets ? (
-              <Icon
-                className="tsIcon widget"
-                src="widget"
+                src="search"
                 width={24}
-                click="WIDGTOGG"
               />
             ) : null}
             {tasks.apps.map((task, i) => {
@@ -159,13 +152,13 @@ const Taskbar = () => {
             data-action="CALNTOGG"
           >
             <div>
-              {time.toLocaleTimeString("en-US", {
+              {time.toLocaleTimeString("fr-FR", {
                 hour: "numeric",
                 minute: "numeric",
               })}
             </div>
             <div>
-              {time.toLocaleDateString("en-US", {
+              {time.toLocaleDateString("fr-FR", {
                 year: "2-digit",
                 month: "2-digit",
                 day: "numeric",

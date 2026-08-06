@@ -128,26 +128,12 @@ export const Settings = () => {
                                   className="device_img"
                                 />
                                 <div className="column_device">
-                                  <p className="device_name">Liber-V</p>
-                                  <p className="device_model">NS14A8</p>
-                                  <p className="device_rename">Rename</p>
+                                  <p className="device_name">CompanyOS</p>
+                                  <p className="device_model">Poste de travail</p>
+                                  <p className="device_rename">Renommer</p>
                                 </div>
                               </div>
                               <div className="right">
-                                <div className="column">
-                                  <img
-                                    src="https://upload.wikimedia.org/wikipedia/commons/2/25/Microsoft_icon.svg"
-                                    height={20}
-                                    alt=""
-                                  />
-                                  <p>
-                                    Microsoft 365
-                                    <br />
-                                    <span className="column_lower">
-                                      View benefits
-                                    </span>
-                                  </p>
-                                </div>
                                 <div
                                   className="column"
                                   onClick={() => setPage("Windows Update")}
@@ -158,10 +144,10 @@ export const Settings = () => {
                                     height={20}
                                   />
                                   <p>
-                                    Windows Update
+                                    Mises à jour
                                     <br />
                                     <span className="column_lower">
-                                      You're up to date
+                                      CompanyOS 0.1.0 — à jour
                                     </span>
                                   </p>
                                 </div>

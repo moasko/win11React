@@ -1,170 +1,170 @@
-import React, { useState, useEffect } from "react";
-import { useSelector, useDispatch } from "react-redux";
+import React, { useState, useEffect, useRef } from "react";
+import { useSelector } from "react-redux";
 import { Icon, Image, ToolBar } from "../../../utils/general";
-import { dispatchAction, handleFileOpen } from "../../../actions";
+import { api, getToken } from "../../../api/client";
 import "./assets/fileexpo.scss";
 
-const NavTitle = (props) => {
-  var src = props.icon || "folder";
+// L'Explorateur est le poste de pilotage du cloud CompanyOS : même
+// habillage que l'explorateur Windows, mais chaque dossier et chaque
+// fichier vit dans l'espace de stockage du tenant, servi par l'API.
 
-  return (
-    <div
-      className="navtitle flex prtclk"
-      data-action={props.action}
-      data-payload={props.payload}
-      onClick={dispatchAction}
-    >
-      <Icon
-        className="mr-1"
-        src={"win/" + src + "-sm"}
-        width={props.isize || 16}
-      />
-      <span>{props.title}</span>
-    </div>
-  );
-};
-
-const FolderDrop = ({ dir }) => {
-  const files = useSelector((state) => state.files);
-  const folder = files.data.getId(dir);
-
-  return (
-    <>
-      {folder.data &&
-        folder.data.map((item, i) => {
-          if (item.type == "folder") {
-            return (
-              <Dropdown
-                key={i}
-                icon={item.info && item.info.icon}
-                title={item.name}
-                notoggle={item.data.length == 0}
-                dir={item.id}
-              />
-            );
-          }
-        })}
-    </>
-  );
-};
-
-const Dropdown = (props) => {
-  const [open, setOpen] = useState(props.isDropped != null);
-  const special = useSelector((state) => state.files.data.special);
-  const [fid, setFID] = useState(() => {
-    if (props.spid) return special[props.spid];
-    else return props.dir;
-  });
-  const toggle = () => setOpen(!open);
-
-  return (
-    <div className="dropdownmenu">
-      <div className="droptitle">
-        {!props.notoggle ? (
-          <Icon
-            className="arrUi"
-            fafa={open ? "faChevronDown" : "faChevronRight"}
-            width={10}
-            onClick={toggle}
-            pr
-          />
-        ) : (
-          <Icon className="arrUi opacity-0" fafa="faCircle" width={10} />
-        )}
-        <NavTitle
-          icon={props.icon}
-          title={props.title}
-          isize={props.isize}
-          action={props.action != "" ? props.action || "FILEDIR" : null}
-          payload={fid}
-        />
-        {props.pinned != null ? (
-          <Icon className="pinUi" src="win/pinned" width={16} />
-        ) : null}
-      </div>
-      {!props.notoggle ? (
-        <div className="dropcontent">
-          {open ? props.children : null}
-          {open && fid != null ? <FolderDrop dir={fid} /> : null}
-        </div>
-      ) : null}
-    </div>
-  );
+const formatBytes = (bytes) => {
+  if (bytes == null) return "";
+  if (bytes < 1024) return `${bytes} o`;
+  const units = ["Ko", "Mo", "Go", "To"];
+  let value = bytes;
+  let unit = -1;
+  do {
+    value /= 1024;
+    unit += 1;
+  } while (value >= 1024 && unit < units.length - 1);
+  return `${value.toFixed(value >= 100 ? 0 : 1)} ${units[unit]}`;
 };
 
 export const Explorer = () => {
-  const apps = useSelector((state) => state.apps);
   const wnapp = useSelector((state) => state.apps.explorer);
-  const files = useSelector((state) => state.files);
-  const fdata = files.data.getId(files.cdir);
-  const [cpath, setPath] = useState(files.cpath);
+  const session = useSelector((state) => state.session);
+  // Incrémenté dès qu'une app écrit un fichier dans le cloud.
+  const cloudVersion = useSelector((state) => state.cloud.version);
+
+  // Fil de navigation : [{id:null, name:"Cloud"}, ...dossiers ouverts]
+  const [path, setPath] = useState([{ id: null, name: "Cloud" }]);
+  // Historique pour les flèches précédent / suivant.
+  const [hist, setHist] = useState([[{ id: null, name: "Cloud" }]]);
+  const [hid, setHid] = useState(0);
+  const [nodes, setNodes] = useState([]);
+  const [rootFolders, setRootFolders] = useState([]);
+  const [usage, setUsage] = useState(null);
+  const [selected, setSelect] = useState(null);
   const [searchtxt, setShText] = useState("");
-  const dispatch = useDispatch();
+  const [view, setView] = useState(1);
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+  const fileInput = useRef(null);
 
-  const handleChange = (e) => setPath(e.target.value);
-  const handleSearchChange = (e) => setShText(e.target.value);
+  const current = path[path.length - 1];
 
-  const handleEnter = (e) => {
-    if (e.key === "Enter") {
-      dispatch({ type: "FILEPATH", payload: cpath });
+  const refresh = async () => {
+    if (session.status !== "authenticated") return;
+    try {
+      const [list, use] = await Promise.all([
+        api.listFiles(current.id),
+        api.usage(),
+      ]);
+      setNodes(list);
+      setUsage(use);
+      if (current.id == null) setRootFolders(list.filter((n) => n.type === "FOLDER"));
+      setError("");
+    } catch (err) {
+      setError(err.message || "Cloud indisponible");
     }
-  };
-
-  const DirCont = () => {
-    var arr = [],
-      curr = fdata,
-      index = 0;
-
-    while (curr) {
-      arr.push(
-        <div key={index++} className="dirCont flex items-center">
-          <div
-            className="dncont"
-            onClick={dispatchAction}
-            tabIndex="-1"
-            data-action="FILEDIR"
-            data-payload={curr.id}
-          >
-            {curr.name}
-          </div>
-          <Icon className="dirchev" fafa="faChevronRight" width={8} />
-        </div>,
-      );
-
-      curr = curr.host;
-    }
-
-    arr.push(
-      <div key={index++} className="dirCont flex items-center">
-        <div className="dncont" tabIndex="-1">
-          This PC
-        </div>
-        <Icon className="dirchev" fafa="faChevronRight" width={8} />
-      </div>,
-    );
-
-    arr.push(
-      <div key={index++} className="dirCont flex items-center">
-        <Icon
-          className="pr-1 pb-px"
-          src={"win/" + fdata.info.icon + "-sm"}
-          width={16}
-        />
-        <Icon className="dirchev" fafa="faChevronRight" width={8} />
-      </div>,
-    );
-
-    return (
-      <div key={index++} className="dirfbox h-full flex">
-        {arr.reverse()}
-      </div>
-    );
   };
 
   useEffect(() => {
-    setPath(files.cpath);
+    if (!wnapp.hide) refresh();
+  }, [wnapp.hide, session.status, current.id, cloudVersion]);
+
+  // Navigation : chaque déplacement alimente l'historique.
+  const navigate = (newPath) => {
+    const next = [...hist.slice(0, hid + 1), newPath];
+    setHist(next);
+    setHid(next.length - 1);
+    setPath(newPath);
+    setSelect(null);
     setShText("");
-  }, [files.cpath]);
+  };
+
+  const goPrev = () => {
+    if (hid > 0) {
+      setHid(hid - 1);
+      setPath(hist[hid - 1]);
+      setSelect(null);
+    }
+  };
+
+  const goNext = () => {
+    if (hid + 1 < hist.length) {
+      setHid(hid + 1);
+      setPath(hist[hid + 1]);
+      setSelect(null);
+    }
+  };
+
+  const goUp = () => {
+    if (path.length > 1) navigate(path.slice(0, -1));
+  };
+
+  const openNode = (node) => {
+    if (node.type === "FOLDER") {
+      navigate([...path, { id: node.id, name: node.name }]);
+    } else {
+      download(node);
+    }
+  };
+
+  const download = async (node) => {
+    try {
+      const res = await fetch(api.downloadUrl(node.id), {
+        headers: { Authorization: `Bearer ${getToken()}` },
+      });
+      if (!res.ok) throw new Error("Téléchargement impossible");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = node.name;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const createFolder = async () => {
+    const name = window.prompt("Nom du nouveau dossier :");
+    if (!name || !name.trim()) return;
+    try {
+      await api.createFolder(name.trim(), current.id);
+      await refresh();
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const upload = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setBusy(true);
+    try {
+      await api.uploadFile(file, current.id);
+      await refresh();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const removeSelected = async () => {
+    const node = nodes.find((n) => n.id === selected);
+    if (!node) return;
+    if (!window.confirm(`Supprimer « ${node.name} » ?`)) return;
+    try {
+      await api.deleteNode(node.id);
+      setSelect(null);
+      await refresh();
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const selectedNode = nodes.find((n) => n.id === selected);
+
+  const handleKey = (e) => {
+    if (e.key == "Backspace") goPrev();
+    if (e.key == "Delete" && selected) removeSelected();
+  };
 
   return (
     <div
@@ -182,217 +182,214 @@ export const Explorer = () => {
         app={wnapp.action}
         icon={wnapp.icon}
         size={wnapp.size}
-        name="File Explorer"
+        name="Explorateur — Cloud"
       />
       <div className="windowScreen flex flex-col">
-        <Ribbon />
+        {/* Ruban : mêmes classes, actions réelles */}
+        <div className="msribbon flex">
+          <div className="ribsec">
+            <div className="drdwcont flex handcr prtclk" onClick={createFolder}>
+              <Icon src="new" ui width={18} margin="0 6px" />
+              <span>Nouveau dossier</span>
+            </div>
+            <div
+              className="drdwcont flex handcr prtclk"
+              onClick={() => fileInput.current?.click()}
+            >
+              <Icon src="paste" ui width={18} margin="0 6px" />
+              <span>{busy ? "Envoi…" : "Importer"}</span>
+            </div>
+            <input ref={fileInput} type="file" className="none" onChange={upload} />
+          </div>
+          <div className="ribsec">
+            <div
+              className="drdwcont flex handcr prtclk"
+              data-off={!selectedNode || selectedNode.type !== "FILE"}
+              onClick={() => selectedNode?.type === "FILE" && download(selectedNode)}
+            >
+              <Icon src="copy" ui width={18} margin="0 6px" />
+              <span>Télécharger</span>
+            </div>
+            <div
+              className="drdwcont flex handcr prtclk"
+              data-off={!selectedNode}
+              onClick={removeSelected}
+            >
+              <Icon src="cut" ui width={18} margin="0 6px" />
+              <span>Supprimer</span>
+            </div>
+          </div>
+        </div>
         <div className="restWindow flex-grow flex flex-col">
           <div className="sec1">
             <Icon
-              className={
-                "navIcon hvtheme" + (files.hid == 0 ? " disableIt" : "")
-              }
+              className={"navIcon hvtheme" + (hid == 0 ? " disableIt" : "")}
               fafa="faArrowLeft"
               width={14}
-              click="FILEPREV"
+              onClick={goPrev}
               pr
             />
             <Icon
               className={
-                "navIcon hvtheme" +
-                (files.hid + 1 == files.hist.length ? " disableIt" : "")
+                "navIcon hvtheme" + (hid + 1 == hist.length ? " disableIt" : "")
               }
               fafa="faArrowRight"
               width={14}
-              click="FILENEXT"
+              onClick={goNext}
               pr
             />
             <Icon
-              className="navIcon hvtheme"
+              className={"navIcon hvtheme" + (path.length == 1 ? " disableIt" : "")}
               fafa="faArrowUp"
               width={14}
-              click="FILEBACK"
+              onClick={goUp}
               pr
             />
             <div className="path-bar noscroll" tabIndex="-1">
-              <input
-                className="path-field"
-                type="text"
-                value={cpath}
-                onChange={handleChange}
-                onKeyDown={handleEnter}
-              />
-              <DirCont />
+              <div className="dirfbox h-full flex">
+                {path.map((step, i) => (
+                  <div key={step.id || "root"} className="dirCont flex items-center">
+                    <div
+                      className="dncont"
+                      tabIndex="-1"
+                      onClick={() => navigate(path.slice(0, i + 1))}
+                    >
+                      {step.name}
+                    </div>
+                    <Icon className="dirchev" fafa="faChevronRight" width={8} />
+                  </div>
+                ))}
+              </div>
             </div>
             <div className="srchbar">
               <Icon className="searchIcon" src="search" width={12} />
               <input
                 type="text"
-                onChange={handleSearchChange}
+                onChange={(e) => setShText(e.target.value)}
                 value={searchtxt}
-                placeholder="Search"
+                placeholder="Rechercher"
               />
             </div>
           </div>
           <div className="sec2">
-            <NavPane />
-            <ContentArea searchtxt={searchtxt} />
+            {/* Volet latéral : accès rapide au cloud du tenant */}
+            <div className="navpane win11Scroll">
+              <div className="extcont">
+                <div className="dropdownmenu">
+                  <div className="droptitle">
+                    <Icon className="arrUi" fafa="faChevronDown" width={10} />
+                    <div
+                      className="navtitle flex prtclk"
+                      onClick={() => navigate([{ id: null, name: "Cloud" }])}
+                    >
+                      <Icon className="mr-1" src="win/onedrive-sm" width={16} />
+                      <span>{session.tenant?.name || "Cloud"}</span>
+                    </div>
+                    <Icon className="pinUi" src="win/pinned" width={16} />
+                  </div>
+                  <div className="dropcontent">
+                    {rootFolders.map((folder) => (
+                      <div key={folder.id} className="dropdownmenu">
+                        <div className="droptitle">
+                          <Icon className="arrUi opacity-0" fafa="faCircle" width={10} />
+                          <div
+                            className="navtitle flex prtclk"
+                            onClick={() =>
+                              navigate([
+                                { id: null, name: "Cloud" },
+                                { id: folder.id, name: folder.name },
+                              ])
+                            }
+                          >
+                            <Icon className="mr-1" src="win/folder-sm" width={16} />
+                            <span>{folder.name}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div
+              className="contentarea"
+              onClick={() => setSelect(null)}
+              onKeyDown={handleKey}
+              tabIndex="-1"
+            >
+              {session.status !== "authenticated" ? (
+                <span className="text-xs mx-auto my-4">
+                  Connectez-vous pour accéder au cloud.
+                </span>
+              ) : (
+                <div className="contentwrap win11Scroll">
+                  {error ? (
+                    <span className="text-xs mx-auto my-2" style={{ color: "#e66" }}>
+                      {error}
+                    </span>
+                  ) : null}
+                  <div className="gridshow" data-size={view == 1 ? "lg" : "md"}>
+                    {nodes.map((node) => {
+                      return (
+                        node.name
+                          .toLowerCase()
+                          .includes(searchtxt.toLowerCase()) && (
+                          <div
+                            key={node.id}
+                            className="conticon hvtheme flex flex-col items-center prtclk"
+                            data-id={node.id}
+                            data-focus={selected == node.id}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelect(node.id);
+                            }}
+                            onDoubleClick={(e) => {
+                              e.stopPropagation();
+                              openNode(node);
+                            }}
+                          >
+                            <Image
+                              src={`icon/win/${node.type === "FOLDER" ? "folder" : "docs"}`}
+                            />
+                            <span>{node.name}</span>
+                          </div>
+                        )
+                      );
+                    })}
+                  </div>
+                  {nodes.length == 0 && !error ? (
+                    <span className="text-xs mx-auto">Ce dossier est vide.</span>
+                  ) : null}
+                </div>
+              )}
+            </div>
           </div>
           <div className="sec3">
-            <div className="item-count text-xs">{fdata.data.length} items</div>
+            <div className="item-count text-xs">
+              {nodes.length} élément{nodes.length > 1 ? "s" : ""}
+              {usage
+                ? ` — ${formatBytes(usage.usedBytes)} sur ${formatBytes(usage.quota)}`
+                : ""}
+            </div>
             <div className="view-opts flex">
               <Icon
                 className="viewicon hvtheme p-1"
-                click="FILEVIEW"
-                payload="5"
-                open={files.view == 5}
+                onClick={() => setView(5)}
+                open={view == 5}
                 src="win/viewinfo"
                 width={16}
+                pr
               />
               <Icon
                 className="viewicon hvtheme p-1"
-                click="FILEVIEW"
-                payload="1"
-                open={files.view == 1}
+                onClick={() => setView(1)}
+                open={view == 1}
                 src="win/viewlarge"
                 width={16}
+                pr
               />
             </div>
           </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const ContentArea = ({ searchtxt }) => {
-  const files = useSelector((state) => state.files);
-  const special = useSelector((state) => state.files.data.special);
-  const [selected, setSelect] = useState(null);
-  const fdata = files.data.getId(files.cdir);
-  const dispatch = useDispatch();
-
-  const handleClick = (e) => {
-    e.stopPropagation();
-    setSelect(e.target.dataset.id);
-  };
-
-  const handleDouble = (e) => {
-    e.stopPropagation();
-    handleFileOpen(e.target.dataset.id);
-  };
-
-  const emptyClick = (e) => {
-    setSelect(null);
-  };
-
-  const handleKey = (e) => {
-    if (e.key == "Backspace") {
-      dispatch({ type: "FILEPREV" });
-    }
-  };
-
-  return (
-    <div
-      className="contentarea"
-      onClick={emptyClick}
-      onKeyDown={handleKey}
-      tabIndex="-1"
-    >
-      <div className="contentwrap win11Scroll">
-        <div className="gridshow" data-size="lg">
-          {fdata.data.map((item, i) => {
-            return (
-              item.name.includes(searchtxt) && (
-                <div
-                  key={i}
-                  className="conticon hvtheme flex flex-col items-center prtclk"
-                  data-id={item.id}
-                  data-focus={selected == item.id}
-                  onClick={handleClick}
-                  onDoubleClick={handleDouble}
-                >
-                  <Image src={`icon/win/${item.info.icon}`} />
-                  <span>{item.name}</span>
-                </div>
-              )
-            );
-          })}
-        </div>
-        {fdata.data.length == 0 ? (
-          <span className="text-xs mx-auto">This folder is empty.</span>
-        ) : null}
-      </div>
-    </div>
-  );
-};
-
-const NavPane = ({}) => {
-  const files = useSelector((state) => state.files);
-  const special = useSelector((state) => state.files.data.special);
-
-  return (
-    <div className="navpane win11Scroll">
-      <div className="extcont">
-        <Dropdown icon="star" title="Quick access" action="" isDropped>
-          <Dropdown
-            icon="down"
-            title="Downloads"
-            spid="%downloads%"
-            notoggle
-            pinned
-          />
-          <Dropdown icon="user" title="Blue" spid="%user%" notoggle pinned />
-          <Dropdown
-            icon="docs"
-            title="Documents"
-            spid="%documents%"
-            notoggle
-            pinned
-          />
-          <Dropdown title="Github" spid="%github%" notoggle />
-          <Dropdown icon="pics" title="Pictures" spid="%pictures%" notoggle />
-        </Dropdown>
-        <Dropdown icon="onedrive" title="OneDrive" spid="%onedrive%" />
-        <Dropdown icon="thispc" title="This PC" action="" isDropped>
-          <Dropdown icon="desk" title="Desktop" spid="%desktop%" />
-          <Dropdown icon="docs" title="Documents" spid="%documents%" />
-          <Dropdown icon="down" title="Downloads" spid="%downloads%" />
-          <Dropdown icon="music" title="Music" spid="%music%" />
-          <Dropdown icon="pics" title="Pictures" spid="%pictures%" />
-          <Dropdown icon="vid" title="Videos" spid="%videos%" />
-          <Dropdown icon="disc" title="OS (C:)" spid="%cdrive%" />
-          <Dropdown icon="disk" title="Blue (D:)" spid="%ddrive%" />
-        </Dropdown>
-      </div>
-    </div>
-  );
-};
-
-const Ribbon = ({}) => {
-  return (
-    <div className="msribbon flex">
-      <div className="ribsec">
-        <div className="drdwcont flex">
-          <Icon src="new" ui width={18} margin="0 6px" />
-          <span>New</span>
-        </div>
-      </div>
-      <div className="ribsec">
-        <Icon src="cut" ui width={18} margin="0 6px" />
-        <Icon src="copy" ui width={18} margin="0 6px" />
-        <Icon src="paste" ui width={18} margin="0 6px" />
-        <Icon src="rename" ui width={18} margin="0 6px" />
-        <Icon src="share" ui width={18} margin="0 6px" />
-      </div>
-      <div className="ribsec">
-        <div className="drdwcont flex">
-          <Icon src="sort" ui width={18} margin="0 6px" />
-          <span>Sort</span>
-        </div>
-        <div className="drdwcont flex">
-          <Icon src="view" ui width={18} margin="0 6px" />
-          <span>View</span>
         </div>
       </div>
     </div>

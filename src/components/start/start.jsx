@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { Icon } from "../../utils/general";
 
@@ -16,14 +16,14 @@ export const StartMenu = () => {
 
     for (i = 0; i < arr.rcApps.length; i++) {
       if (arr.rcApps[i].lastUsed < 0) {
-        arr.rcApps[i].lastUsed = "Recently Added";
+        arr.rcApps[i].lastUsed = "Ajouté récemment";
       } else if (arr.rcApps[i].lastUsed < 10) {
-        arr.rcApps[i].lastUsed = "Just Now";
+        arr.rcApps[i].lastUsed = "À l'instant";
       } else if (arr.rcApps[i].lastUsed < 60) {
-        arr.rcApps[i].lastUsed += "m ago";
+        arr.rcApps[i].lastUsed += " min";
       } else if (arr.rcApps[i].lastUsed < 360) {
         arr.rcApps[i].lastUsed =
-          Math.floor(arr.rcApps[i].lastUsed / 60) + "h ago";
+          Math.floor(arr.rcApps[i].lastUsed / 60) + " h";
       }
     }
 
@@ -56,7 +56,7 @@ export const StartMenu = () => {
 
   const [query, setQuery] = useState("");
   const [match, setMatch] = useState({});
-  const [atab, setTab] = useState("All");
+  const [atab, setTab] = useState("Tout");
   // const [pwctrl, setPowCtrl] = useState
 
   const dispatch = useDispatch();
@@ -74,10 +74,7 @@ export const StartMenu = () => {
       dispatch(action);
     }
 
-    if (
-      action.type &&
-      (action.payload == "full" || action.type == "EDGELINK")
-    ) {
+    if (action.type && action.payload == "full") {
       dispatch({
         type: "STARTHID",
       });
@@ -120,13 +117,13 @@ export const StartMenu = () => {
             <div className="menuUp">
               <div className="pinnedApps">
                 <div className="stAcbar">
-                  <div className="gpname">Pinned</div>
+                  <div className="gpname">Épinglées</div>
                   <div
                     className="gpbtn prtclk"
                     onClick={clickDispatch}
                     data-action="STARTALL"
                   >
-                    <div>All apps</div>
+                    <div>Toutes les apps</div>
                     <Icon fafa="faChevronRight" width={8} />
                   </div>
                 </div>
@@ -152,9 +149,9 @@ export const StartMenu = () => {
               </div>
               <div className="recApps win11Scroll">
                 <div className="stAcbar">
-                  <div className="gpname">Recommended</div>
+                  <div className="gpname">Recommandé</div>
                   <div className="gpbtn none">
-                    <div>More</div>
+                    <div>Plus</div>
                     <Icon fafa="faChevronRight" width={8} />
                   </div>
                 </div>
@@ -184,14 +181,14 @@ export const StartMenu = () => {
           <div className="allCont" data-allapps={start.showAll}>
             <div className="appCont">
               <div className="stAcbar">
-                <div className="gpname">All apps</div>
+                <div className="gpname">Toutes les apps</div>
                 <div
                   className="gpbtn prtclk"
                   onClick={clickDispatch}
                   data-action="STARTALL"
                 >
                   <Icon className="chevLeft" fafa="faChevronLeft" width={8} />
-                  <div>Back</div>
+                  <div>Retour</div>
                 </div>
               </div>
               <div className="allApps win11Scroll" data-alpha={start.alpha}>
@@ -261,14 +258,7 @@ export const StartMenu = () => {
           </div>
           <div className="menuBar">
             <div className="profile handcr">
-              <Icon
-                src="blueProf"
-                ui
-                rounded
-                width={26}
-                click="EXTERNAL"
-                payload="https://blueedge.me"
-              />
+              <Icon src="blueProf" ui rounded width={26} />
               <div className="usName">{userName}</div>
             </div>
             <div className="relative powerMenu">
@@ -290,7 +280,7 @@ export const StartMenu = () => {
                       fill="currentColor"
                     />
                   </svg>
-                  <span>Lock</span>
+                  <span>Verrouiller</span>
                 </div>
                 <div
                   className="flex prtclk items-center gap-2"
@@ -309,7 +299,7 @@ export const StartMenu = () => {
                       fill="currentColor"
                     />
                   </svg>
-                  <span>Shut down</span>
+                  <span>Arrêter</span>
                 </div>
                 <div
                   className="flex prtclk items-center gap-2"
@@ -328,7 +318,7 @@ export const StartMenu = () => {
                       fill="currentColor"
                     />
                   </svg>
-                  <span>Restart</span>
+                  <span>Redémarrer</span>
                 </div>
               </div>
               <svg
@@ -358,16 +348,16 @@ export const StartMenu = () => {
                 setQuery(event.target.value.trim());
               }}
               defaultValue={query}
-              placeholder="Type here to search"
+              placeholder="Rechercher"
               autoFocus
             />
           </div>
           <div className="flex py-4 px-1 text-xs">
             <div className="opts w-1/2 flex justify-between">
-              <div value={atab == "All"} onClick={tabSw}>
+              <div value={atab == "Tout"} onClick={tabSw}>
                 All
               </div>
-              <div value={atab == "Apps"} onClick={tabSw}>
+              <div value={atab == "Applications"} onClick={tabSw}>
                 Apps
               </div>
               <div value={atab == "Documents"} onClick={tabSw}>
@@ -376,7 +366,7 @@ export const StartMenu = () => {
               <div value={atab == "Web"} onClick={tabSw}>
                 Web
               </div>
-              <div value={atab == "More"} onClick={tabSw}>
+              <div value={atab == "Plus"} onClick={tabSw}>
                 More
               </div>
             </div>
@@ -387,27 +377,20 @@ export const StartMenu = () => {
               data-width={query.length != 0}
             >
               <div className="text-sm font-semibold mb-4">
-                {query.length ? "Best match" : "Top apps"}
+                {query.length ? "Meilleur résultat" : "Applications principales"}
               </div>
               {query.length ? (
                 <div className="textResult h-16">
-                  <div className="smatch flex my-2 p-3 rounded">
-                    <Icon src={match.icon} width={24} />
-                    <div className="matchInfo flex-col px-2">
-                      <div className="font-semibold text-xs">{match.name}</div>
-                      <div className="text-xss">App</div>
-                    </div>
-                  </div>
                   <div
                     className="smatch flex my-2 p-3 rounded handcr prtclk"
                     onClick={clickDispatch}
-                    data-action="EDGELINK"
-                    data-payload={query}
+                    data-action={match.action}
+                    data-payload={match.payload || "full"}
                   >
-                    <Icon className="blueicon" src="search" ui width={20} />
+                    <Icon src={match.icon} width={24} />
                     <div className="matchInfo flex-col px-2">
-                      <div className="font-semibold text-xs">Search online</div>
-                      <div className="text-xss">Web</div>
+                      <div className="font-semibold text-xs">{match.name}</div>
+                      <div className="text-xss">Application</div>
                     </div>
                   </div>
                 </div>
@@ -429,25 +412,6 @@ export const StartMenu = () => {
                       );
                     })}
                   </div>
-                  <div className="text-sm font-semibold mt-8">
-                    Quick Searches
-                  </div>
-                  <div className="quickSearches mt-2">
-                    {start.qksrch.map((srch, i) => {
-                      return (
-                        <div
-                          key={i}
-                          className="qksrch flex items-center p-3 my-1 handcr prtclk"
-                          onClick={clickDispatch}
-                          data-action="EDGELINK"
-                          data-payload={srch[2]}
-                        >
-                          <Icon fafa={srch[0]} reg={srch[1]} />
-                          <div className="ml-4 text-sm">{srch[2]}</div>
-                        </div>
-                      );
-                    })}
-                  </div>
                 </>
               )}
             </div>
@@ -464,7 +428,7 @@ export const StartMenu = () => {
                   data-payload={match.payload ? match.payload : "full"}
                 >
                   <Icon className="blueicon" src="link" ui width={16} />
-                  <div className="text-xss ml-3">Open</div>
+                  <div className="text-xss ml-3">Ouvrir</div>
                 </div>
               </div>
             ) : null}
