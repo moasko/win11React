@@ -1,0 +1,245 @@
+// Sélecteur d'emplacement — même charte que les modules.
+
+.savePickerBack {
+  position: absolute;
+  inset: 0;
+  z-index: 999999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgb(0 0 0 / 35%);
+  backdrop-filter: blur(2px);
+}
+
+.savePicker {
+  --sp-card: #ffffff;
+  --sp-panel: #f8f9fb;
+  --sp-line: #e3e6eb;
+  --sp-text: #1f2733;
+  --sp-muted: #6b7684;
+  --sp-accent: #1a73e8;
+
+  width: 460px;
+  max-width: 92vw;
+  max-height: 78vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--sp-card);
+  color: var(--sp-text);
+  border: 1px solid var(--sp-line);
+  border-radius: 10px;
+  box-shadow: 0 18px 46px rgb(0 0 0 / 28%);
+  overflow: hidden;
+
+  .spHead {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 14px 18px;
+    font-size: 0.84em;
+    font-weight: 600;
+    border-bottom: 1px solid var(--sp-line);
+
+    .uicon {
+      display: flex;
+      color: var(--sp-accent);
+    }
+  }
+
+  .spCrumbs {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 5px;
+    padding: 11px 18px;
+    font-size: 0.74em;
+
+    .spSep {
+      color: var(--sp-muted);
+    }
+
+    .spCrumb {
+      color: var(--sp-muted);
+
+      &[data-last="true"] {
+        color: var(--sp-text);
+        font-weight: 600;
+      }
+
+      &:hover {
+        color: var(--sp-accent);
+      }
+    }
+  }
+
+  .spList {
+    flex-grow: 1;
+    min-height: 130px;
+    max-height: 260px;
+    overflow-y: auto;
+    margin: 0 14px;
+    border: 1px solid var(--sp-line);
+    border-radius: 7px;
+    background: var(--sp-panel);
+  }
+
+  .spEmpty {
+    padding: 22px 16px;
+    text-align: center;
+    font-size: 0.74em;
+    color: var(--sp-muted);
+  }
+
+  .spRow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    font-size: 0.76em;
+    border-bottom: 1px solid var(--sp-line);
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    &:hover {
+      background: rgb(26 115 232 / 7%);
+    }
+
+    .spName {
+      flex-grow: 1;
+      min-width: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .uicon {
+      display: flex;
+      flex-shrink: 0;
+      color: var(--sp-muted);
+    }
+
+    &.spFile {
+      color: var(--sp-muted);
+    }
+  }
+
+  .spNameRow {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    padding: 13px 18px 0;
+
+    .spLabel {
+      font-size: 0.72em;
+      color: var(--sp-muted);
+    }
+
+    input {
+      width: 100%;
+      font-size: 0.78em;
+      font-family: inherit;
+      color: var(--sp-text);
+      background: var(--sp-card);
+      border: 1px solid var(--sp-line);
+      border-radius: 6px;
+      padding: 8px 11px;
+
+      &:focus {
+        border-color: var(--sp-accent);
+        outline: none;
+      }
+    }
+  }
+
+  .spWarn {
+    margin: 9px 18px 0;
+    padding: 7px 11px;
+    border-radius: 6px;
+    background: #fef7e0;
+    border: 1px solid #fadf9a;
+    color: #8a6100;
+    font-size: 0.71em;
+    line-height: 1.45;
+
+    &.spError {
+      background: #fce8e6;
+      border-color: #f5c4bf;
+      color: #b3261e;
+    }
+  }
+
+  .spActions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 15px 18px 17px;
+
+    .spSpacer {
+      flex-grow: 1;
+    }
+  }
+
+  .spGhost {
+    font-size: 0.74em;
+    padding: 7px 14px;
+    border: 1px solid var(--sp-line);
+    border-radius: 6px;
+    background: var(--sp-card);
+    white-space: nowrap;
+
+    &:hover {
+      border-color: #c7d0dd;
+    }
+  }
+
+  .spPrimary {
+    font-size: 0.74em;
+    font-weight: 600;
+    padding: 7px 18px;
+    border-radius: 6px;
+    background: var(--sp-accent);
+    color: #fff;
+    white-space: nowrap;
+
+    &:hover {
+      background: #1667d2;
+    }
+
+    &[data-off="true"] {
+      opacity: 0.45;
+      pointer-events: none;
+    }
+  }
+}
+
+body[data-theme="dark"] .savePicker {
+  --sp-card: #262630;
+  --sp-panel: #1e1e26;
+  --sp-line: #35353f;
+  --sp-text: #e8e8ee;
+  --sp-muted: #9a9aa8;
+  --sp-accent: #6f8dff;
+
+  .spGhost:hover {
+    border-color: #4a4a58;
+    background: rgb(255 255 255 / 4%);
+  }
+
+  .spPrimary:hover {
+    background: #5f7cf0;
+  }
+
+  .spWarn {
+    background: #3a3020;
+    border-color: #5d4d2a;
+    color: #f0cd7a;
+
+    &.spError {
+      background: #3a2422;
+      border-color: #5d3230;
+      color: #f0a09a;
+    }
+  }
+}

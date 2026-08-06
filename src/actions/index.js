@@ -216,6 +216,3 @@ export const handleFileOpen = (id) => {
   }
 };
 
-export const flightMode = () => {
-  store.dispatch({ type: "TOGGAIRPLNMD", payload: "" });
-};

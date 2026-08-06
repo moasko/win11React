@@ -1,13 +1,13 @@
 ﻿import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Icon } from "../../utils/general";
-import Battery from "../shared/Battery";
 import "./taskbar.scss";
 
 const Taskbar = () => {
   const tasks = useSelector((state) => {
     return state.taskbar;
   });
+  const session = useSelector((state) => state.session);
   const apps = useSelector((state) => {
     var tmpApps = { ...state.apps };
     for (var i = 0; i < state.taskbar.apps.length; i++) {
@@ -131,19 +131,18 @@ const Taskbar = () => {
           >
             <Icon fafa="faChevronUp" width={10} />
           </div>
+          {/* Indicateur de session : ouvre le volet rapide (thème,
+              stockage, compte). Un OS web n'a ni wifi, ni son, ni batterie
+              à exposer — le navigateur s'en occupe. */}
           <div
-            className="prtclk handcr my-1 px-1 hvlight flex rounded"
+            className="prtclk handcr my-1 px-2 hvlight flex items-center rounded taskSession"
             onClick={clickDispatch}
             data-action="PANETOGG"
           >
-            <Icon className="taskIcon" src="wifi" ui width={16} />
-            <Icon
-              className="taskIcon"
-              src={"audio" + tasks.audio}
-              ui
-              width={16}
-            />
-            <Battery />
+            <Icon fafa="faUser" width={11} />
+            <span className="taskSessionName">
+              {session.tenant?.name || "Non connecté"}
+            </span>
           </div>
 
           <div

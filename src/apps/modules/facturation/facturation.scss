@@ -1,0 +1,739 @@
+// Facturation — charte commune aux modules CompanyOS.
+
+.factApp {
+  --fct-bg: #ffffff;
+  --fct-panel: #f8f9fb;
+  --fct-card: #ffffff;
+  --fct-line: #e3e6eb;
+  --fct-text: #1f2733;
+  --fct-muted: #6b7684;
+  --fct-accent: #1a73e8;
+  --fct-accent-soft: #e8f0fe;
+  --fct-field: #ffffff;
+  --fct-green: #188038;
+  --fct-amber: #b06000;
+  --fct-red: #d93025;
+  --fct-grey: #7a8493;
+
+  width: 84%;
+  height: 84%;
+  top: 6%;
+  left: 8%;
+  background: var(--fct-bg);
+  color: var(--fct-text);
+
+  .fctLocked {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-grow: 1;
+    font-size: 0.84em;
+    color: var(--fct-muted);
+  }
+
+  .fctShell {
+    display: grid;
+    grid-template-columns: 178px minmax(0, 1fr) 232px;
+    flex-grow: 1;
+    min-height: 0;
+    background: var(--fct-bg);
+  }
+
+  // ---- Navigation ---------------------------------------------------------
+
+  .fctNav {
+    border-right: 1px solid var(--fct-line);
+    padding: 14px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+
+    .fctNavItem {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 8px 11px;
+      border-radius: 6px;
+      font-size: 0.76em;
+      color: var(--fct-muted);
+
+      .uicon {
+        display: flex;
+      }
+
+      &:hover {
+        background: rgb(0 0 0 / 3%);
+      }
+
+      &[data-active="true"] {
+        background: var(--fct-accent-soft);
+        color: var(--fct-accent);
+        font-weight: 600;
+      }
+    }
+  }
+
+  // ---- Colonne centrale ---------------------------------------------------
+
+  .fctMain {
+    overflow-y: auto;
+    padding: 18px 24px 28px;
+    min-height: 0;
+  }
+
+  .fctSection {
+    padding-bottom: 22px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--fct-line);
+
+    &:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+    }
+
+    h2 {
+      font-size: 0.92em;
+      font-weight: 600;
+      margin: 0;
+    }
+  }
+
+  .fctHint {
+    font-size: 0.72em;
+    color: var(--fct-muted);
+    margin: 3px 0 14px;
+  }
+
+  // ---- Champs -------------------------------------------------------------
+
+  .fctLabel {
+    font-size: 0.72em;
+    color: var(--fct-muted);
+  }
+
+  .fctField {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-bottom: 12px;
+    min-width: 0;
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      font-size: 0.76em;
+      font-family: inherit;
+      color: var(--fct-text);
+      background: var(--fct-field);
+      border: 1px solid var(--fct-line);
+      border-radius: 6px;
+      padding: 8px 11px;
+      resize: none;
+
+      &::placeholder {
+        color: #9aa4b2;
+      }
+
+      &:focus {
+        border-color: var(--fct-accent);
+        outline: none;
+      }
+    }
+  }
+
+  .fctGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 16px;
+  }
+
+  .fctChips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    margin-bottom: 14px;
+  }
+
+  .fctChip {
+    font-size: 0.72em;
+    padding: 6px 13px;
+    border: 1px solid var(--fct-line);
+    border-radius: 100px;
+    background: var(--fct-card);
+    white-space: nowrap;
+
+    &:hover {
+      border-color: #c7d0dd;
+    }
+
+    &[data-active="true"] {
+      border-color: var(--fct-accent);
+      background: var(--fct-accent-soft);
+      color: var(--fct-accent);
+      font-weight: 600;
+    }
+  }
+
+  .fctWarn {
+    margin-bottom: 12px;
+    padding: 8px 11px;
+    border-radius: 6px;
+    background: #fef7e0;
+    border: 1px solid #fadf9a;
+    color: #8a6100;
+    font-size: 0.72em;
+    line-height: 1.45;
+  }
+
+  .fctEmptyBox {
+    font-size: 0.74em;
+    color: var(--fct-muted);
+    line-height: 1.5;
+    padding: 16px;
+    border: 1px dashed var(--fct-line);
+    border-radius: 7px;
+    background: var(--fct-panel);
+  }
+
+  // ---- Liste des factures -------------------------------------------------
+
+  .fctList {
+    border: 1px solid var(--fct-line);
+    border-radius: 7px;
+    overflow: hidden;
+  }
+
+  .fctRow {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 9px 12px;
+    border-bottom: 1px solid var(--fct-line);
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    &:hover {
+      background: var(--fct-panel);
+    }
+
+    &[data-active="true"] {
+      background: var(--fct-accent-soft);
+    }
+
+    .fctRowNum {
+      font-size: 0.74em;
+      font-variant-numeric: tabular-nums;
+      color: var(--fct-muted);
+      flex-shrink: 0;
+      width: 66px;
+    }
+
+    .fctRowInfo {
+      flex-grow: 1;
+      min-width: 0;
+    }
+
+    .fctRowName {
+      font-size: 0.78em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .fctRowMeta {
+      font-size: 0.66em;
+      color: var(--fct-muted);
+      margin-top: 1px;
+    }
+
+    .fctRowTotal {
+      font-size: 0.78em;
+      font-variant-numeric: tabular-nums;
+      flex-shrink: 0;
+      white-space: nowrap;
+    }
+  }
+
+  .fctTag {
+    font-size: 0.65em;
+    padding: 3px 10px;
+    border-radius: 100px;
+    white-space: nowrap;
+    flex-shrink: 0;
+    background: rgb(107 118 132 / 14%);
+    color: var(--fct-muted);
+
+    &[data-tone="info"] {
+      background: var(--fct-accent-soft);
+      color: var(--fct-accent);
+    }
+    &[data-tone="ok"] {
+      background: rgb(24 128 56 / 12%);
+      color: var(--fct-green);
+    }
+    &[data-tone="late"] {
+      background: rgb(217 48 37 / 12%);
+      color: var(--fct-red);
+    }
+    &[data-tone="off"] {
+      background: rgb(122 132 147 / 15%);
+      color: var(--fct-grey);
+      text-decoration: line-through;
+    }
+  }
+
+  // ---- Tableau des lignes -------------------------------------------------
+
+  .fctTable {
+    border: 1px solid var(--fct-line);
+    border-radius: 7px;
+    overflow: hidden;
+  }
+
+  .fctTHead,
+  .fctTRow {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 66px 104px 66px 116px 26px;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 10px;
+  }
+
+  .fctTHead {
+    background: var(--fct-panel);
+    border-bottom: 1px solid var(--fct-line);
+    font-size: 0.68em;
+    font-weight: 600;
+    color: var(--fct-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .fctTRow {
+    border-bottom: 1px solid var(--fct-line);
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    input {
+      width: 100%;
+      min-width: 0;
+      font-size: 0.75em;
+      font-family: inherit;
+      color: var(--fct-text);
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 5px;
+      padding: 5px 7px;
+
+      &:hover {
+        border-color: var(--fct-line);
+      }
+
+      &:focus {
+        border-color: var(--fct-accent);
+        background: var(--fct-field);
+        outline: none;
+      }
+    }
+
+    .fctCell {
+      font-size: 0.75em;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    // Désignation libre + reprise d'un article du Stock.
+    .fctDesigCell {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-width: 0;
+
+      input {
+        flex-grow: 1;
+        min-width: 0;
+      }
+
+      .fctArticlePick {
+        flex-shrink: 0;
+        width: 74px;
+        font-size: 0.68em;
+        font-family: inherit;
+        color: var(--fct-muted);
+        background: var(--fct-panel);
+        border: 1px solid var(--fct-line);
+        border-radius: 5px;
+        padding: 4px 5px;
+
+        &:focus {
+          border-color: var(--fct-accent);
+          outline: none;
+        }
+      }
+    }
+
+    .fctDel {
+      font-size: 0.76em;
+      color: var(--fct-muted);
+      text-align: center;
+
+      &:hover {
+        color: var(--fct-red);
+      }
+    }
+  }
+
+  .fctRight {
+    text-align: right;
+  }
+
+  .fctLignesFoot {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-top: 12px;
+  }
+
+  .fctBtnGhost {
+    font-size: 0.74em;
+    padding: 7px 14px;
+    border: 1px solid var(--fct-line);
+    border-radius: 6px;
+    background: var(--fct-card);
+    white-space: nowrap;
+
+    &:hover {
+      border-color: #c7d0dd;
+    }
+  }
+
+  .fctTotals {
+    min-width: 210px;
+    font-size: 0.76em;
+
+    > div {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 4px 0;
+
+      span {
+        color: var(--fct-muted);
+      }
+
+      strong {
+        font-variant-numeric: tabular-nums;
+        font-weight: 600;
+      }
+    }
+
+    .fctTtc {
+      margin-top: 4px;
+      padding-top: 8px;
+      border-top: 1px solid var(--fct-line);
+      font-size: 1.1em;
+
+      strong {
+        color: var(--fct-accent);
+      }
+    }
+  }
+
+  // ---- Analytics ----------------------------------------------------------
+
+  .fctStatRow {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .fctStatCard {
+    border: 1px solid var(--fct-line);
+    border-radius: 7px;
+    background: var(--fct-panel);
+    padding: 11px 12px;
+    min-width: 0;
+
+    &[data-alert="true"] {
+      border-color: var(--fct-red);
+
+      .fctStatVal {
+        color: var(--fct-red);
+      }
+    }
+
+    .fctStatVal {
+      font-size: 0.9em;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .fctStatLbl {
+      font-size: 0.64em;
+      color: var(--fct-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-top: 2px;
+    }
+  }
+
+  .fctBars {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .fctBarRow {
+    display: grid;
+    grid-template-columns: 96px minmax(0, 1fr) 150px;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.72em;
+
+    .fctBarLabel {
+      color: var(--fct-muted);
+    }
+
+    .fctBarTrack {
+      height: 8px;
+      border-radius: 100px;
+      background: var(--fct-panel);
+      border: 1px solid var(--fct-line);
+      overflow: hidden;
+    }
+
+    .fctBarFill {
+      height: 100%;
+      background: var(--fct-grey);
+      transition: width 300ms ease;
+
+      &[data-tone="info"] {
+        background: var(--fct-accent);
+      }
+      &[data-tone="ok"] {
+        background: var(--fct-green);
+      }
+      &[data-tone="off"] {
+        background: var(--fct-grey);
+      }
+    }
+
+    .fctBarVal {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+  }
+
+  // ---- Panneau contextuel -------------------------------------------------
+
+  .fctSide {
+    border-left: 1px solid var(--fct-line);
+    background: var(--fct-panel);
+    padding: 16px 16px 22px;
+    overflow-y: auto;
+    min-height: 0;
+  }
+
+  .fctSideTitle {
+    font-size: 0.78em;
+    font-weight: 600;
+    margin-bottom: 12px;
+  }
+
+  .fctCard {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    text-align: center;
+    padding: 18px 14px;
+    min-height: 158px;
+    background: var(--fct-card);
+    border: 1px solid var(--fct-line);
+    border-radius: 10px;
+
+    .fctCardNum {
+      font-size: 0.72em;
+      font-variant-numeric: tabular-nums;
+      color: var(--fct-muted);
+    }
+
+    .fctCardClient {
+      font-size: 0.86em;
+      font-weight: 600;
+      max-width: 100%;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .fctCardTtc {
+      font-size: 1.15em;
+      font-weight: 600;
+      color: var(--fct-accent);
+      margin-top: 4px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .fctCardMeta {
+      font-size: 0.66em;
+      color: var(--fct-muted);
+      line-height: 1.4;
+    }
+
+    .fctCardEmpty {
+      font-size: 0.72em;
+      color: var(--fct-muted);
+      line-height: 1.5;
+    }
+  }
+
+  .fctPrimary {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 14px;
+    padding: 10px 12px;
+    border-radius: 7px;
+    background: var(--fct-accent);
+    color: #fff;
+    font-size: 0.76em;
+    font-weight: 600;
+
+    .uicon {
+      display: flex;
+    }
+
+    &:hover {
+      background: #1667d2;
+    }
+
+    &[data-off="true"] {
+      opacity: 0.45;
+      pointer-events: none;
+    }
+  }
+
+  .fctSideBtns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 7px;
+    margin-top: 10px;
+  }
+
+  .fctSideBtn,
+  .fctQuickBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 7px;
+    border: 1px solid var(--fct-line);
+    border-radius: 6px;
+    background: var(--fct-card);
+    font-size: 0.71em;
+    white-space: nowrap;
+
+    .uicon {
+      display: flex;
+      color: var(--fct-muted);
+    }
+
+    &:hover {
+      border-color: #c7d0dd;
+    }
+
+    &[data-off="true"] {
+      opacity: 0.45;
+      pointer-events: none;
+    }
+
+    &.fctDanger {
+      color: var(--fct-red);
+
+      .uicon {
+        color: var(--fct-red);
+      }
+    }
+  }
+
+  .fctQuick {
+    margin-top: 16px;
+    border: 1px solid var(--fct-line);
+    border-radius: 8px;
+    background: var(--fct-card);
+    padding: 11px;
+
+    .fctQuickTitle {
+      font-size: 0.7em;
+      color: var(--fct-muted);
+      margin-bottom: 8px;
+    }
+
+    .fctQuickBtns {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .fctQuickBtn {
+      background: var(--fct-panel);
+    }
+  }
+
+  .fctNotice {
+    margin-top: 12px;
+    font-size: 0.71em;
+    color: var(--fct-accent);
+    line-height: 1.45;
+  }
+}
+
+body[data-theme="dark"] .factApp {
+  --fct-bg: #1b1b22;
+  --fct-panel: #202029;
+  --fct-card: #262630;
+  --fct-line: #35353f;
+  --fct-text: #e8e8ee;
+  --fct-muted: #9a9aa8;
+  --fct-accent: #6f8dff;
+  --fct-accent-soft: #2a3050;
+  --fct-field: #262630;
+  --fct-green: #6cd08a;
+  --fct-amber: #e0b060;
+  --fct-red: #f08078;
+  --fct-grey: #8b8b98;
+
+  .fctNav .fctNavItem:hover,
+  .fctChip:hover,
+  .fctBtnGhost:hover,
+  .fctSideBtn:hover,
+  .fctQuickBtn:hover {
+    border-color: #4a4a58;
+    background: rgb(255 255 255 / 4%);
+  }
+
+  .fctWarn {
+    background: #3a3020;
+    border-color: #5d4d2a;
+    color: #f0cd7a;
+  }
+
+  .fctPrimary:hover {
+    background: #5f7cf0;
+  }
+}

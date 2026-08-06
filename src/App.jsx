@@ -3,6 +3,7 @@ import { ErrorBoundary } from "react-error-boundary";
 import { useDispatch, useSelector } from "react-redux";
 import "./i18nextConf";
 import "./index.css";
+import "./utils/scroll.scss";
 
 import ActMenu from "./components/menu";
 import {
@@ -19,6 +20,7 @@ import { loadSettings } from "./actions";
 import * as Applications from "./containers/applications";
 import * as Drafts from "./containers/applications/draft";
 import { modules } from "./apps/registry";
+import { SavePicker } from "./apps/SavePicker";
 import { syncInstalledModules, detachAllModules } from "./apps/sync";
 import { api, getToken, clearToken } from "./api/client";
 
@@ -116,8 +118,10 @@ function App() {
           payload: { path: "person.name", value: me.user.name },
         });
         await syncInstalledModules();
-      } catch {
-        clearToken();
+      } catch (err) {
+        // API injoignable : on garde le jeton, la session repartira au
+        // prochain chargement. Seul un 401 signifie un jeton mort.
+        if (err.status === 401) clearToken();
         dispatch({ type: "SESSION_CLEAR" });
         detachAllModules();
       }
@@ -177,6 +181,7 @@ function App() {
           </div>
           <Taskbar />
           <ActMenu />
+          <SavePicker />
         </div>
       </ErrorBoundary>
     </div>

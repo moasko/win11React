@@ -1,46 +1,14 @@
+// Volet rapide. CompanyOS tourne dans un navigateur : pas de Wi-Fi, de
+// Bluetooth, de batterie ni de luminosité à piloter. Ne restent que les
+// réglages que l'OS contrôle réellement.
 const defState = {
   quicks: [
     {
       ui: true,
-      src: "wifi",
-      name: "WiFi",
-      state: "network.wifi.state",
-      action: "STNGTOGG",
-    },
-    {
-      ui: true,
-      src: "bluetooth",
-      name: "Bluetooth",
-      state: "devices.bluetooth",
-      action: "STNGTOGG",
-    },
-    {
-      ui: true,
-      src: "airplane",
-      name: "Flight Mode",
-      state: "network.airplane",
-      action: "flightMode",
-    },
-    {
-      ui: true,
-      src: "saver",
-      name: "Battery Saver",
-      state: "system.power.saver.state",
-      action: "STNGTOGG",
-    },
-    {
-      ui: true,
       src: "sun",
-      name: "Theme",
+      name: "Thème",
       state: "person.theme",
       action: "changeTheme",
-    },
-    {
-      ui: true,
-      src: "nightlight",
-      name: "Night Light",
-      state: "system.display.nightlight.state",
-      action: "STNGTOGG",
     },
   ],
   hide: true,
@@ -51,7 +19,9 @@ const defState = {
 const paneReducer = (state = defState, action) => {
   if (action.type == "PANETHEM") {
     var tmpState = { ...state };
-    tmpState.quicks[4].src = action.payload;
+    tmpState.quicks = tmpState.quicks.map((q) =>
+      q.name === "Thème" ? { ...q, src: action.payload } : q,
+    );
     return tmpState;
   } else if (action.type == "BANDTOGG") {
     return { ...state, banhide: !state.banhide };

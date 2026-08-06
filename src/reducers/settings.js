@@ -1,39 +1,12 @@
 import { desktopApps } from "../utils";
 
+// CompanyOS tourne dans un navigateur : aucun réglage matériel
+// (batterie, luminosité, Wi-Fi, Bluetooth) n'a de sens ici.
 const defState = {
-  system: {
-    power: {
-      saver: {
-        state: false,
-      },
-      battery: 100,
-    },
-    display: {
-      brightness: 100,
-      nightlight: {
-        state: false,
-      },
-      connect: false,
-    },
-  },
   person: {
     name: "CompanyOS",
     theme: "dark",
     color: "blue",
-  },
-  devices: {
-    bluetooth: false,
-  },
-  network: {
-    wifi: {
-      state: true,
-    },
-    airplane: false,
-  },
-  privacy: {
-    location: {
-      state: false,
-    },
   },
 };
 

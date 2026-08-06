@@ -11,6 +11,7 @@
 
 import store from "../reducers";
 import { api } from "../api/client";
+import { requestSave } from "./saveRequest";
 
 /// Trouve le dossier `name` à la racine du cloud, ou le crée.
 const ensureRootFolder = async (name) => {
@@ -42,12 +43,8 @@ const uniqueName = (name, taken) => {
   return `${base} (${i})${ext}`;
 };
 
-/// Enregistre un Blob/File dans le cloud du tenant.
-/// `folder` : dossier de destination à la racine (celui du module, en général).
-/// Renvoie le nœud créé.
-export const saveToCloud = async (blob, filename, { folder } = {}) => {
-  const parentId = folder ? await ensureRootFolder(folder) : null;
-
+/// Écrit réellement le fichier à l'emplacement donné.
+const putAt = async (blob, filename, parentId) => {
   const siblings = await api.listFiles(parentId);
   const name = uniqueName(filename, new Set(siblings.map((n) => n.name)));
 
@@ -67,6 +64,22 @@ export const saveToCloud = async (blob, filename, { folder } = {}) => {
   }
 
   return node;
+};
+
+/// Enregistrement direct, sans question : le fichier atterrit dans le
+/// dossier du module. Réservé aux écritures automatiques.
+export const saveToCloud = async (blob, filename, { folder } = {}) => {
+  const parentId = folder ? await ensureRootFolder(folder) : null;
+  return putAt(blob, filename, parentId);
+};
+
+/// Enregistrement demandé par l'utilisateur : on ouvre le cloud pour qu'il
+/// choisisse le dossier et le nom, comme dans l'Explorateur.
+/// Renvoie le nœud créé, ou null s'il annule.
+export const saveAs = async (blob, filename, { folder } = {}) => {
+  const choice = await requestSave(filename, folder);
+  if (!choice) return null;
+  return putAt(blob, choice.name, choice.parentId);
 };
 
 /// Convertit une data-URL (canvas, QR, graphique…) en Blob.

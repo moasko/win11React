@@ -3,7 +3,6 @@ import { useDispatch, useSelector } from "react-redux";
 import * as Actions from "../../actions";
 import { getTreeValue } from "../../actions";
 import { Icon } from "../../utils/general";
-import Battery from "../shared/Battery";
 import "./searchpane.scss";
 import "./sidepane.scss";
 import "./startmenu.scss";
@@ -107,15 +106,28 @@ export const BandPane = () => {
   );
 };
 
+const formatBytes = (bytes) => {
+  if (bytes == null) return "—";
+  if (bytes < 1024) return `${bytes} o`;
+  const units = ["Ko", "Mo", "Go", "To"];
+  let value = bytes;
+  let unit = -1;
+  do {
+    value /= 1024;
+    unit += 1;
+  } while (value >= 1024 && unit < units.length - 1);
+  return `${value.toFixed(value >= 100 ? 0 : 1)} ${units[unit]}`;
+};
+
+/// Volet rapide : ce qu'un OS web contrôle vraiment — le thème, le
+/// stockage de l'espace de travail et la session. Pas de Wi-Fi, de
+/// Bluetooth, de batterie ni de luminosité : le navigateur les gère.
 export const SidePane = () => {
   const sidepane = useSelector((state) => state.sidepane);
   const setting = useSelector((state) => state.setting);
-  const tasks = useSelector((state) => state.taskbar);
+  const session = useSelector((state) => state.session);
   const [pnstates, setPnstate] = useState([]);
   const dispatch = useDispatch();
-
-  let [btlevel, setBtLevel] = useState("");
-  const childToParent = () => {};
 
   const clickDispatch = (event) => {
     var action = {
@@ -128,78 +140,22 @@ export const SidePane = () => {
         Actions[action.type](action.payload);
       } else dispatch(action);
     }
-    // For battery saver
-    if (action.payload === "system.power.saver.state") setBrightness();
   };
-
-  const vSlider = document.querySelector(".vSlider");
-  const bSlider = document.querySelector(".bSlider");
-
-  const setVolume = (e) => {
-    var aud = 3;
-    if (e.target.value < 70) aud = 2;
-    if (e.target.value < 30) aud = 1;
-    if (e.target.value == 0) aud = 0;
-
-    dispatch({ type: "TASKAUDO", payload: aud });
-
-    sliderBackground(vSlider, e.target.value);
-  };
-
-  function sliderBackground(elem, e) {
-    elem.style.setProperty(
-      "--track-color",
-      `linear-gradient(90deg, var(--clrPrm) ${e - 3}%, #888888 ${e}%)`,
-    );
-  }
-
-  const setBrightness = (e) => {
-    var brgt = document.getElementById("brightnessSlider").value;
-    if (!e) {
-      // Battery saver
-      const state = setting.system.power.saver.state;
-      const factor = state ? 0.7 : 100 / 70;
-      const newBrgt = brgt * factor;
-      setBrightnessValue(newBrgt);
-      document.getElementById("brightnessSlider").value = newBrgt;
-    } else {
-      // Brightness slider
-      setBrightnessValue(brgt);
-    }
-  };
-
-  function setBrightnessValue(brgt) {
-    document.getElementById("brightoverlay").style.opacity = (100 - brgt) / 100;
-    dispatch({
-      type: "STNGSETV",
-      payload: {
-        path: "system.display.brightness",
-        value: brgt,
-      },
-    });
-    sliderBackground(bSlider, brgt);
-  }
 
   useEffect(() => {
-    sidepane.quicks.map((item, i) => {
-      if (item.src == "nightlight") {
-        if (pnstates[i]) document.body.dataset.sepia = true;
-        else document.body.dataset.sepia = false;
-      }
-    });
-  });
-
-  useEffect(() => {
-    // console.log("ok")
     var tmp = [];
     for (var i = 0; i < sidepane.quicks.length; i++) {
       var val = getTreeValue(setting, sidepane.quicks[i].state);
-      if (sidepane.quicks[i].name == "Theme") val = val == "dark";
+      if (sidepane.quicks[i].name == "Thème") val = val == "dark";
       tmp.push(val);
     }
 
     setPnstate(tmp);
   }, [setting, sidepane]);
+
+  const quota = session.tenant?.quota;
+  const used = session.tenant?.usedBytes;
+  const pct = quota ? Math.min(100, (used / quota) * 100) : 0;
 
   return (
     <div
@@ -207,7 +163,7 @@ export const SidePane = () => {
       data-hide={sidepane.hide}
       style={{ "--prefix": "PANE" }}
     >
-      <div className="quickSettings p-5 pb-8">
+      <div className="quickSettings p-5 pb-4">
         <div className="qkCont">
           {sidepane.quicks.map((qk, idx) => {
             return (
@@ -232,34 +188,31 @@ export const SidePane = () => {
             );
           })}
         </div>
-        <div className="sliderCont">
-          <Icon className="mx-2" src="brightness" ui width={20} />
-          <input
-            id="brightnessSlider"
-            className="sliders bSlider"
-            onChange={setBrightness}
-            type="range"
-            min="10"
-            max="100"
-            defaultValue="100"
-          />
-        </div>
-        <div className="sliderCont">
-          <Icon className="mx-2" src={"audio" + tasks.audio} ui width={18} />
-          <input
-            className="sliders vSlider"
-            onChange={setVolume}
-            type="range"
-            min="0"
-            max="100"
-            defaultValue="100"
-          />
-        </div>
+        {session.status === "authenticated" ? (
+          <div className="paneStorage">
+            <div className="paneStorageHead">
+              <span>Stockage</span>
+              <span>
+                {formatBytes(used)} / {formatBytes(quota)}
+              </span>
+            </div>
+            <div className="paneStorageBar">
+              <div className="paneStorageFill" style={{ width: `${pct}%` }} />
+            </div>
+          </div>
+        ) : null}
       </div>
       <div className="p-1 bottomBar">
-        <div className="px-3 battery-sidepane">
-          <Battery pct />
-        </div>
+        {session.status === "authenticated" ? (
+          <div className="paneAccount px-3">
+            <div className="paneUser">{session.user.name}</div>
+            <div className="paneTenant">{session.tenant.name}</div>
+          </div>
+        ) : (
+          <div className="paneAccount px-3">
+            <div className="paneTenant">Non connecté</div>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -1,6 +1,5 @@
 ﻿import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import Battery from "../../components/shared/Battery";
 import { Icon, Image } from "../../utils/general";
 import { api, setToken, clearToken } from "../../api/client";
 import { syncInstalledModules, detachAllModules } from "../../apps/sync";
@@ -234,8 +233,7 @@ export const LockScreen = (props) => {
         )}
       </div>
       <div className="bottomInfo flex">
-        <Icon className="mx-2" src="wifi" ui width={16} invert />
-        <Battery invert />
+        <span className="lockBrand">CompanyOS</span>
       </div>
     </div>
   );

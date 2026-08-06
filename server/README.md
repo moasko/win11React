@@ -30,6 +30,7 @@ lance une instance sur le port 5432 correspondant à l'URL par défaut.
 | `apps`          | Catalogue global de la Boutique. `isCore` = installé d'office.        |
 | `installations` | Quelle app est installée dans quel espace de travail.                 |
 | `fs_nodes`      | Arborescence fichiers/dossiers. Métadonnées seulement.                |
+| `records`       | Données des modules métier, en JSONB, rangées par (module, collection). |
 
 L'isolation entre clients repose sur `tenantId`, présent sur chaque table métier.
 Toute requête de lecture ou d'écriture doit être filtrée dessus — c'est la seule
@@ -70,6 +71,19 @@ passer en S3 ne demande que d'ajouter un pilote exposant `buildKey` / `put` / `r
 | POST    | `/api/files/upload`          | Envoi multipart. Refuse si le quota est atteint. |
 | GET     | `/api/files/:id/download`    | Télécharge un fichier.                        |
 | DELETE  | `/api/files/:id`             | Suppression récursive, quota libéré.          |
+
+### Données des modules
+
+| Méthode | Route                                    | Description                          |
+| ------- | ---------------------------------------- | ------------------------------------ |
+| GET     | `/api/records/:module/:collection`       | Liste (500 max, plus récents d'abord). |
+| POST    | `/api/records/:module/:collection`       | Crée un enregistrement.              |
+| PUT     | `/api/records/:module/:collection/:id`   | Remplace les données.                |
+| DELETE  | `/api/records/:module/:collection/:id`   | Supprime.                            |
+
+Le corps est `{ "data": { ... } }`, un objet JSON libre de 64 Ko maximum.
+Un nouveau module n'exige donc **aucune migration** : il choisit son couple
+module/collection et écrit.
 
 Toutes les routes hors `/api/auth/register` et `/api/auth/login` exigent
 `Authorization: Bearer <token>`.

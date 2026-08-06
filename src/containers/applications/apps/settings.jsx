@@ -1,10 +1,22 @@
-import React, { useState } from "react";
+﻿import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { changeTheme } from "../../../actions";
 import { Image, ToolBar } from "../../../utils/general";
 import LangSwitch from "./assets/Langswitch";
 import "./assets/settings.scss";
 import data from "./assets/settingsData.json";
+
+// Les clés de settingsData.json servent aussi de nom de fichier d'icône
+// (img/settings/<clé>.webp) : on les garde telles quelles et on traduit
+// uniquement l'affichage.
+const LABELS = {
+  System: "Système",
+  Personalisation: "Personnalisation",
+  Apps: "Applications",
+  Accounts: "Comptes",
+  "Time & language": "Date et langue",
+  "Windows Update": "Mises à jour",
+};
 
 export const Settings = () => {
   const wnapp = useSelector((state) => state.apps.settings);
@@ -43,6 +55,9 @@ export const Settings = () => {
   };
 
   const userName = useSelector((state) => state.setting.person.name);
+  const tenantName = useSelector(
+    (state) => state.session.tenant?.name || "Espace de travail",
+  );
 
   return (
     <div
@@ -60,7 +75,7 @@ export const Settings = () => {
         app={wnapp.action}
         icon={wnapp.icon}
         size={wnapp.size}
-        name="Settings"
+        name="Paramètres"
       />
       <div className="windowScreen flex flex-col" data-dock="true">
         <div className="restWindow flex-grow flex flex-col">
@@ -75,13 +90,13 @@ export const Settings = () => {
                 />
                 <div>
                   <p>{userName}</p>
-                  <p>Local Account</p>
+                  <p>{tenantName}</p>
                 </div>
               </div>
               <input
                 type="text"
                 className="search"
-                placeholder="Find a setting "
+                placeholder="Rechercher un réglage"
                 name="search"
               />
             </div>
@@ -102,7 +117,7 @@ export const Settings = () => {
                       height={16}
                       width={16}
                     />
-                    {e}
+                    {LABELS[e] || e}
                   </div>
                 );
               })}
@@ -114,7 +129,7 @@ export const Settings = () => {
             return (
               page === e && (
                 <main key={e}>
-                  <h1>{e}</h1>
+                  <h1>{LABELS[e] || e}</h1>
                   <div className="tilesCont win11Scroll">
                     {data[e].map((e, i) => {
                       switch (e.type) {
@@ -149,39 +164,6 @@ export const Settings = () => {
                                     <span className="column_lower">
                                       CompanyOS 0.1.0 — à jour
                                     </span>
-                                  </p>
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        case "netTop":
-                          return (
-                            <div key={i} className="netTop">
-                              <div>
-                                <img
-                                  src="img/settings/wifi.png"
-                                  alt=""
-                                  height={100}
-                                />
-                                <div>
-                                  <h2 className="font-medium text-lg">WiFi</h2>
-                                  <p>Connected, secured</p>
-                                </div>
-                              </div>
-                              <div className="box">
-                                <span className="settingsIcon"></span>
-                                <div>
-                                  <h3>Properties</h3>
-                                  <p>Public network 5 Ghz</p>
-                                </div>
-                              </div>
-                              <div className="box">
-                                <span className="settingsIcon"></span>
-                                <div>
-                                  <h3>Data Usage</h3>
-                                  <p>
-                                    {Math.round(Math.random() * 100)}GB, last 30
-                                    days
                                   </p>
                                 </div>
                               </div>
@@ -227,8 +209,8 @@ export const Settings = () => {
                               />
                               <div>
                                 <p>{userName.toUpperCase()}</p>
-                                <p>Local Account</p>
-                                <p>Administrator</p>
+                                <p>{tenantName}</p>
+                                <p>Propriétaire</p>
                               </div>
                             </div>
                           );
@@ -236,7 +218,7 @@ export const Settings = () => {
                           return (
                             <div className="timeTop">
                               <h1>
-                                {new Date().toLocaleTimeString("en-US", {
+                                {new Date().toLocaleTimeString("fr-FR", {
                                   hour: "numeric",
                                   minute: "numeric",
                                   hour12: true,
@@ -249,10 +231,10 @@ export const Settings = () => {
                             <div key={i} className="tile langSwitcherTile">
                               <span className="settingsIcon"></span>
                               <div className="tile_content">
-                                <p>Windows display language</p>
+                                <p>Langue d'affichage</p>
                                 <p className="tile_desc">
-                                  Windows features like Settings and File
-                                  Explorer will appear in this language
+                                  Le shell, les paramètres et l'explorateur
+                                  s'afficheront dans cette langue
                                 </p>
                               </div>
                               <LangSwitch />
@@ -268,8 +250,8 @@ export const Settings = () => {
                                   alt=""
                                 />
                                 <div>
-                                  <h2>You're up to date</h2>
-                                  <p>Last checked: Today</p>
+                                  <h2>Votre espace est à jour</h2>
+                                  <p>Dernière vérification : aujourd'hui</p>
                                 </div>
                               </div>
                               <div className="right">

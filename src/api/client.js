@@ -26,7 +26,11 @@ const request = async (path, { method = "GET", body, isForm = false } = {}) => {
   const payload = await response.json().catch(() => null);
 
   if (!response.ok) {
-    throw new Error(payload?.error || `Erreur ${response.status}`);
+    const error = new Error(payload?.error || `Erreur ${response.status}`);
+    // Le code HTTP permet de distinguer un jeton refusé (401) d'une panne
+    // passagère : seul le premier cas doit déconnecter l'utilisateur.
+    error.status = response.status;
+    throw error;
   }
 
   return payload;

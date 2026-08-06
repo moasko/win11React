@@ -28,15 +28,19 @@ npm install && npm start
 Le shell tourne sur `http://localhost:5173`. Pour l'API, voir
 [server/README.md](server/README.md).
 
-## Ajouter une application au shell
+## Deux familles d'applications
 
-Trois endroits à toucher :
+**Le socle** (`src/containers/applications/apps/`) est toujours présent :
+Explorateur, Boutique, Terminal, Bloc-notes, Calculatrice, Paramètres,
+Gestionnaire de tâches, Corbeille.
 
-1. `src/utils/apps.js` — l'entrée du registre : `{ name, icon, type, action }`.
-   La chaîne `action` est ce qui pilote l'ouverture de la fenêtre.
-2. `src/containers/applications/apps/` — le composant de la fenêtre, réexporté
-   depuis `src/containers/applications/index.jsx`.
-3. `src/reducers/apps.js` — l'état des fenêtres, indexé par `icon`.
+**Les modules métier** (`src/apps/modules/`) s'installent depuis la Boutique.
+Un module non installé n'existe pas dans le shell : ni icône, ni fenêtre.
+Créer une app se résume à copier `src/apps/modules/_template/` et à déclarer
+l'app au catalogue — voir [src/apps/README.md](src/apps/README.md).
 
-Le catalogue de la Boutique vit côté API (`server/prisma/seed.js`) : une app y est
-décrite pour être proposée à l'installation, indépendamment de son composant.
+## Fichiers
+
+L'Explorateur **est** le cloud de l'espace de travail. Tout fichier importé ou
+produit par une app y atterrit, via `saveToCloud()` dans `src/apps/cloud.js`.
+Aucune app ne garde ses fichiers pour elle.
