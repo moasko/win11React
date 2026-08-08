@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { prisma, serialize } from "../db.js";
 import { authenticate } from "../auth.js";
+import { journaliser } from "../audit.js";
 
 /// CRUD générique des modules métier. Un module range ses données dans
 /// des collections nommées : /api/records/crm/clients, etc.
@@ -37,6 +38,31 @@ const validateData = (body, reply) => {
   return data;
 };
 
+/// Les identités jointes à chaque fiche : qui l'a saisie, qui l'a modifiée
+/// en dernier. Renvoyées avec la fiche pour que les listes affichent un
+/// visage sans réclamer une requête par ligne.
+///
+/// Les identifiants sont conservés à part : un compte supprimé laisse la
+/// fiche intacte, simplement sans nom en face.
+const auteurs = async (tenantId, records) => {
+  const ids = [
+    ...new Set(records.flatMap((r) => [r.userId, r.updatedById]).filter(Boolean)),
+  ];
+  if (!ids.length) return records;
+
+  const gens = await prisma.user.findMany({
+    where: { id: { in: ids }, tenantId },
+    select: { id: true, name: true, avatar: true },
+  });
+  const par = new Map(gens.map((u) => [u.id, u]));
+
+  return records.map((r) => ({
+    ...r,
+    auteur: par.get(r.userId) || null,
+    modifiePar: r.updatedById ? par.get(r.updatedById) || null : null,
+  }));
+};
+
 export default async function recordRoutes(app) {
   app.addHook("preHandler", authenticate);
 
@@ -50,7 +76,7 @@ export default async function recordRoutes(app) {
       take: 500,
     });
 
-    return serialize(records);
+    return serialize(await auteurs(request.tenantId, records));
   });
 
   app.post("/:module/:collection", async (request, reply) => {
@@ -68,7 +94,9 @@ export default async function recordRoutes(app) {
       },
     });
 
-    return reply.code(201).send(serialize(record));
+    return reply
+      .code(201)
+      .send(serialize((await auteurs(request.tenantId, [record]))[0]));
   });
 
   app.put("/:module/:collection/:id", async (request, reply) => {
@@ -80,7 +108,7 @@ export default async function recordRoutes(app) {
     // updateMany + filtre tenant : impossible de toucher la ligne d'un autre client.
     const { count } = await prisma.record.updateMany({
       where: { id: request.params.id, tenantId: request.tenantId, ...names },
-      data: { data },
+      data: { data, updatedById: request.user.id },
     });
 
     if (count === 0) {
@@ -88,20 +116,34 @@ export default async function recordRoutes(app) {
     }
 
     const record = await prisma.record.findUnique({ where: { id: request.params.id } });
-    return serialize(record);
+    return serialize((await auteurs(request.tenantId, [record]))[0]);
   });
 
   app.delete("/:module/:collection/:id", async (request, reply) => {
     const names = validateParams(request.params, reply);
     if (!names) return;
 
-    const { count } = await prisma.record.deleteMany({
+    // On relit avant d'effacer : une fois la ligne partie, il ne reste
+    // aucun moyen de dire au journal *ce qui* a disparu.
+    const record = await prisma.record.findFirst({
       where: { id: request.params.id, tenantId: request.tenantId, ...names },
     });
-
-    if (count === 0) {
+    if (!record) {
       return reply.code(404).send({ error: "Enregistrement introuvable" });
     }
+
+    await prisma.record.delete({ where: { id: record.id } });
+
+    // Une suppression de donnée métier est irréversible — il n'y a pas de
+    // corbeille pour les fiches. Elle a sa place au journal.
+    await journaliser(
+      request,
+      "donnees.suppression",
+      // Les fiches n'ont pas de champ commun : on prend le premier libellé
+      // plausible, sinon la collection suffit à situer la perte.
+      record.data?.nom || record.data?.titre || record.data?.designation || null,
+      { module: names.module, collection: names.collection },
+    );
 
     return reply.code(204).send();
   });

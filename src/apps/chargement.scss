@@ -1,0 +1,133 @@
+// Chargement — voir chargement.jsx.
+//
+// Aucune variable de thème : ces éléments sont posés dans tous les modules,
+// qui ont chacun les leurs (`--crm-line`, `--stk-muted`…). Ils s'habillent
+// donc de la couleur du texte qui les entoure, comme la signature de fiche.
+
+.cosSquelette {
+  padding: 10px 14px;
+}
+
+.cosSqLigne {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid color-mix(in srgb, currentColor 10%, transparent);
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.cosSqPastille {
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  border-radius: 50%;
+}
+
+.cosSqBarre {
+  height: 9px;
+  border-radius: 100px;
+  flex-grow: 1;
+  min-width: 0;
+}
+
+.cosSqCourte {
+  flex-grow: 0;
+  width: 74px;
+  flex-shrink: 0;
+}
+
+.cosSqGrille {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
+  padding: 14px;
+}
+
+.cosSqCarte {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.cosSqImage {
+  aspect-ratio: 1;
+  border-radius: 7px;
+}
+
+// Une seule animation pour toutes les formes : un balayage lent, jamais un
+// clignotement. Un squelette qui pulse vite fatigue et donne l'impression
+// que quelque chose ne va pas.
+.cosSqPastille,
+.cosSqBarre,
+.cosSqImage {
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, currentColor 9%, transparent) 25%,
+    color-mix(in srgb, currentColor 16%, transparent) 37%,
+    color-mix(in srgb, currentColor 9%, transparent) 63%
+  );
+  background-size: 400% 100%;
+  animation: cosSqOnde 1.6s ease-in-out infinite;
+}
+
+@keyframes cosSqOnde {
+  0% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0 50%;
+  }
+}
+
+// Respecte le réglage système : une animation continue peut être pénible,
+// voire déclencher un malaise. Le squelette reste lisible sans elle.
+@media (prefers-reduced-motion: reduce) {
+  .cosSqPastille,
+  .cosSqBarre,
+  .cosSqImage {
+    animation: none;
+    background: color-mix(in srgb, currentColor 12%, transparent);
+  }
+}
+
+.cosErreurChargement {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex-grow: 1;
+  padding: 40px 24px;
+  text-align: center;
+  font-size: 0.82em;
+  color: #d93025;
+
+  .uicon {
+    display: flex;
+  }
+}
+
+.cosErrTexte {
+  max-width: 48ch;
+  line-height: 1.5;
+}
+
+.cosErrBouton {
+  padding: 7px 16px;
+  border-radius: 6px;
+  border: 1px solid currentColor;
+  font-size: 0.92em;
+  font-weight: 600;
+
+  &:hover {
+    background: color-mix(in srgb, currentColor 12%, transparent);
+  }
+}
+
+body[data-theme="dark"] .cosErreurChargement {
+  color: #e2716a;
+}

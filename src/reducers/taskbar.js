@@ -8,7 +8,8 @@ const defState = {
   prevApp: "",
   prevPos: 0,
   align: alignment,
-  search: true,
+  // Retenue, comme l'alignement : un réglage qui s'oublie n'en est pas un.
+  search: localStorage.getItem("taskbar-search") !== "false",
 };
 
 const taskReducer = (state = defState, action) => {
@@ -48,6 +49,7 @@ const taskReducer = (state = defState, action) => {
         prev: false,
       };
     case "TASKSRCH":
+      localStorage.setItem("taskbar-search", action.payload);
       return {
         ...state,
         search: action.payload == "true",

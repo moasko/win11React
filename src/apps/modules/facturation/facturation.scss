@@ -1,6 +1,10 @@
-// Facturation — charte commune aux modules CompanyOS.
+// Facturation — trois colonnes : filtres, journal des documents, éditeur.
+//
+// Même architecture que le Stock : la liste reste visible pendant qu'on
+// édite, parce qu'on passe son temps à comparer une facture à la suivante.
+// Jetons de thème de la charte CompanyOS, thème sombre en fin de fichier.
 
-.factApp {
+.fctApp {
   --fct-bg: #ffffff;
   --fct-panel: #f8f9fb;
   --fct-card: #ffffff;
@@ -13,59 +17,622 @@
   --fct-green: #188038;
   --fct-amber: #b06000;
   --fct-red: #d93025;
-  --fct-grey: #7a8493;
+  --fct-rayon: 8px;
 
-  width: 84%;
-  height: 84%;
-  top: 6%;
-  left: 8%;
   background: var(--fct-bg);
   color: var(--fct-text);
 
+  &.floatTab[data-size="mini"] {
+    width: 82%;
+    height: 80%;
+    top: 9%;
+    left: 9%;
+    min-width: 960px;
+    min-height: 560px;
+  }
+
   .fctLocked {
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
+    gap: 12px;
     flex-grow: 1;
-    font-size: 0.84em;
     color: var(--fct-muted);
+    font-size: 0.85em;
   }
 
   .fctShell {
+    position: relative;
     display: grid;
-    grid-template-columns: 178px minmax(0, 1fr) 232px;
+    // Le panneau porte l'éditeur complet — client, dates, lignes avec
+    // quatre champs par rangée. En dessous de 400 px, ces rangées ne
+    // tiennent plus.
+    grid-template-columns: 210px minmax(0, 1fr) 400px;
     flex-grow: 1;
     min-height: 0;
-    background: var(--fct-bg);
   }
 
-  // ---- Navigation ---------------------------------------------------------
+  // ---- Barre latérale -----------------------------------------------------
 
   .fctNav {
     border-right: 1px solid var(--fct-line);
-    padding: 14px 10px;
+    padding: 10px 8px;
+    overflow-y: auto;
+    min-height: 0;
+    background: var(--fct-panel);
+  }
+
+  .fctNavItem {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 6px;
+    font-size: 0.78em;
+    color: var(--fct-muted);
+    margin-bottom: 2px;
+
+    .uicon {
+      display: flex;
+      flex-shrink: 0;
+    }
+
+    &:hover {
+      background: rgb(107 118 132 / 10%);
+    }
+
+    &[data-actif="true"] {
+      background: var(--fct-accent-soft);
+      color: var(--fct-accent);
+      font-weight: 600;
+    }
+  }
+
+  .fctNavTitre {
+    margin: 18px 10px 6px;
+    font-size: 0.66em;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--fct-muted);
+  }
+
+  .fctFiltre {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 6px 10px;
+    border-radius: 5px;
+    font-size: 0.78em;
+    color: var(--fct-text);
+
+    &:hover {
+      background: rgb(107 118 132 / 10%);
+    }
+
+    &[data-actif="true"] {
+      background: var(--fct-accent-soft);
+      color: var(--fct-accent);
+      font-weight: 600;
+    }
+  }
+
+  .fctFiltreCompte {
+    flex-shrink: 0;
+    font-size: 0.85em;
+    font-weight: 400;
+    color: var(--fct-muted);
+  }
+
+  // ---- Contenu ------------------------------------------------------------
+
+  .fctMain {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+  }
+
+  .fctStats {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1px;
+    background: var(--fct-line);
+    border-bottom: 1px solid var(--fct-line);
+    flex-shrink: 0;
+  }
+
+  .fctStat {
     display: flex;
     flex-direction: column;
     gap: 2px;
+    padding: 12px 16px;
+    background: var(--fct-bg);
+    min-width: 0;
 
-    .fctNavItem {
+    &[data-ton="ok"] .fctStatVal {
+      color: var(--fct-green);
+    }
+
+    &[data-ton="info"] .fctStatVal {
+      color: var(--fct-accent);
+    }
+
+    &[data-ton="bad"] .fctStatVal {
+      color: var(--fct-red);
+    }
+
+    &.handcr:hover {
+      background: var(--fct-panel);
+    }
+  }
+
+  .fctStatVal {
+    font-size: 1.02em;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .fctStatLbl {
+    font-size: 0.68em;
+    color: var(--fct-muted);
+  }
+
+  .fctBarre {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--fct-line);
+    flex-shrink: 0;
+    flex-wrap: wrap;
+  }
+
+  .fctRecherche {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-grow: 1;
+    min-width: 180px;
+    padding: 6px 10px;
+    border: 1px solid var(--fct-line);
+    border-radius: 6px;
+    background: var(--fct-field);
+    color: var(--fct-muted);
+
+    &:focus-within {
+      border-color: var(--fct-accent);
+    }
+
+    input {
+      flex-grow: 1;
+      min-width: 0;
+      border: none;
+      outline: none;
+      background: transparent;
+      font-family: inherit;
+      font-size: 0.78em;
+      color: var(--fct-text);
+
+      &::placeholder {
+        color: var(--fct-muted);
+      }
+    }
+
+    .uicon {
       display: flex;
-      align-items: center;
-      gap: 9px;
-      padding: 8px 11px;
-      border-radius: 6px;
-      font-size: 0.76em;
+      cursor: pointer;
+    }
+  }
+
+  // ---- Tableaux -----------------------------------------------------------
+
+  .fctTable {
+    overflow-y: auto;
+    min-height: 0;
+    padding-bottom: 10px;
+  }
+
+  .fctTr {
+    display: grid;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 14px;
+    border-bottom: 1px solid var(--fct-line);
+    font-size: 0.76em;
+
+    &:hover:not(.fctTh) {
+      background: var(--fct-panel);
+    }
+
+    &[data-actif="true"] {
+      background: var(--fct-accent-soft);
+    }
+  }
+
+  .fctTh {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: var(--fct-bg);
+    font-size: 0.66em;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--fct-muted);
+  }
+
+  .fctTrDoc {
+    grid-template-columns: 120px minmax(0, 1.6fr) 92px 108px 118px 108px 116px;
+  }
+
+  .fctTrReg {
+    grid-template-columns: 92px 120px minmax(0, 1.4fr) 120px minmax(0, 1fr) 118px;
+  }
+
+  .fctNumero {
+    min-width: 0;
+
+    strong {
+      display: block;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    em {
+      font-style: normal;
+      font-size: 0.86em;
+      color: var(--fct-muted);
+    }
+  }
+
+  .fctNum {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .fctMuted {
+    color: var(--fct-muted);
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .fctRetard {
+    font-style: normal;
+    color: var(--fct-red);
+  }
+
+  .fctLien {
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    &:hover {
+      color: var(--fct-accent);
+      text-decoration: underline;
+    }
+  }
+
+  .fctTag {
+    display: inline-block;
+    padding: 2px 9px;
+    border-radius: 100px;
+    font-size: 0.86em;
+    white-space: nowrap;
+    background: rgb(107 118 132 / 14%);
+    color: var(--fct-muted);
+
+    &[data-ton="ok"] {
+      background: rgb(24 128 56 / 12%);
+      color: var(--fct-green);
+    }
+
+    &[data-ton="info"] {
+      background: var(--fct-accent-soft);
+      color: var(--fct-accent);
+    }
+
+    &[data-ton="warn"] {
+      background: rgb(176 96 0 / 12%);
+      color: var(--fct-amber);
+    }
+
+    &[data-ton="bad"] {
+      background: rgb(217 48 37 / 12%);
+      color: var(--fct-red);
+    }
+  }
+
+  // ---- Analyse ------------------------------------------------------------
+
+  .fctAnalyse {
+    padding: 16px 18px;
+    overflow-y: auto;
+    min-height: 0;
+  }
+
+  .fctSousTitre {
+    font-size: 0.68em;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--fct-muted);
+    margin: 6px 0 10px;
+
+    &:not(:first-child) {
+      margin-top: 26px;
+    }
+  }
+
+  .fctJauge {
+    display: grid;
+    grid-template-columns: 150px minmax(0, 1fr) 130px;
+    align-items: center;
+    gap: 12px;
+    font-size: 0.76em;
+    margin-bottom: 8px;
+  }
+
+  .fctJaugeNom {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .fctJaugeFond {
+    height: 8px;
+    border-radius: 100px;
+    background: rgb(107 118 132 / 14%);
+    overflow: hidden;
+  }
+
+  .fctJaugeVal {
+    display: block;
+    height: 100%;
+    border-radius: 100px;
+    background: var(--fct-accent);
+
+    // Au-delà de 60 jours, une créance ne se recouvre plus toute seule :
+    // la couleur le dit avant qu'on ait lu le libellé.
+    &[data-alerte="true"] {
+      background: var(--fct-red);
+    }
+  }
+
+  .fctJaugeChiffre {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    color: var(--fct-muted);
+  }
+
+  .fctRelance {
+    display: grid;
+    grid-template-columns: 84px minmax(0, 1.6fr) 130px 130px;
+    align-items: center;
+    gap: 12px;
+    padding: 9px 12px;
+    border: 1px solid var(--fct-line);
+    border-radius: 6px;
+    margin-bottom: 6px;
+    font-size: 0.76em;
+
+    &:hover {
+      border-color: var(--fct-accent);
+    }
+  }
+
+  .fctRelanceNom {
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  // ---- Panneau ------------------------------------------------------------
+
+  .fctPanneau {
+    border-left: 1px solid var(--fct-line);
+    background: var(--fct-panel);
+    padding: 14px;
+    overflow-y: auto;
+    min-height: 0;
+  }
+
+  .fctPanVide {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    height: 100%;
+    padding: 30px 16px;
+    text-align: center;
+    font-size: 0.76em;
+    color: var(--fct-muted);
+  }
+
+  .fctPanTete {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .fctPanNum {
+    font-size: 1em;
+    font-weight: 600;
+  }
+
+  .fctPanType {
+    font-size: 0.7em;
+    color: var(--fct-muted);
+  }
+
+  .fctSolde {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    padding: 10px 12px;
+    border: 1px solid var(--fct-line);
+    border-radius: var(--fct-rayon);
+    background: var(--fct-card);
+    margin-bottom: 12px;
+
+    strong {
+      display: block;
+      font-size: 0.94em;
+      font-variant-numeric: tabular-nums;
+
+      &[data-ton="ok"] {
+        color: var(--fct-green);
+      }
+
+      &[data-ton="bad"] {
+        color: var(--fct-red);
+      }
+    }
+  }
+
+  .fctSoldeLbl {
+    display: block;
+    font-size: 0.66em;
+    color: var(--fct-muted);
+    margin-bottom: 1px;
+  }
+
+  .fctOnglets {
+    display: flex;
+    gap: 2px;
+    padding: 3px;
+    border-radius: 7px;
+    background: rgb(107 118 132 / 10%);
+    margin-bottom: 14px;
+
+    span {
+      flex: 1;
+      text-align: center;
+      padding: 6px 4px;
+      border-radius: 5px;
+      font-size: 0.74em;
       color: var(--fct-muted);
 
-      .uicon {
-        display: flex;
+      &[data-actif="true"] {
+        background: var(--fct-card);
+        color: var(--fct-text);
+        font-weight: 600;
       }
+    }
+  }
 
-      &:hover {
-        background: rgb(0 0 0 / 3%);
-      }
+  .fctClient {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border: 1px solid var(--fct-line);
+    border-radius: var(--fct-rayon);
+    background: var(--fct-card);
+    margin-bottom: 12px;
+  }
 
-      &[data-active="true"] {
+  .fctClientInfo {
+    flex-grow: 1;
+    min-width: 0;
+  }
+
+  .fctClientNom {
+    font-size: 0.82em;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .fctClientMeta {
+    font-size: 0.68em;
+    color: var(--fct-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-top: 1px;
+  }
+
+  .fctField {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-bottom: 10px;
+    min-width: 0;
+  }
+
+  .fctLabel {
+    font-size: 0.7em;
+    color: var(--fct-muted);
+  }
+
+  // `minmax(0, …)` partout : la valeur par défaut d'une piste est `auto`,
+  // donc un champ au contenu large refuserait de rétrécir et pousserait
+  // son voisin hors de la colonne.
+  .fctDeux {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 0 10px;
+  }
+
+  .fctQuatre {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0 8px;
+  }
+
+  input[type="text"],
+  input[type="number"],
+  input[type="date"],
+  select,
+  textarea {
+    width: 100%;
+    min-width: 0;
+    font-family: inherit;
+    font-size: 0.76em;
+    color: var(--fct-text);
+    background: var(--fct-field);
+    border: 1px solid var(--fct-line);
+    border-radius: 6px;
+    padding: 7px 9px;
+    resize: vertical;
+
+    &:focus {
+      outline: none;
+      border-color: var(--fct-accent);
+    }
+  }
+
+  .fctStatuts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+
+    span {
+      padding: 5px 11px;
+      border: 1px solid var(--fct-line);
+      border-radius: 100px;
+      font-size: 0.7em;
+      color: var(--fct-muted);
+      background: var(--fct-card);
+
+      &[data-actif="true"] {
+        border-color: var(--fct-accent);
         background: var(--fct-accent-soft);
         color: var(--fct-accent);
         font-weight: 600;
@@ -73,546 +640,148 @@
     }
   }
 
-  // ---- Colonne centrale ---------------------------------------------------
+  // ---- Lignes -------------------------------------------------------------
 
-  .fctMain {
-    overflow-y: auto;
-    padding: 18px 24px 28px;
-    min-height: 0;
-  }
-
-  .fctSection {
-    padding-bottom: 22px;
-    margin-bottom: 20px;
-    border-bottom: 1px solid var(--fct-line);
-
-    &:last-child {
-      border-bottom: none;
-      margin-bottom: 0;
-    }
-
-    h2 {
-      font-size: 0.92em;
-      font-weight: 600;
-      margin: 0;
-    }
-  }
-
-  .fctHint {
-    font-size: 0.72em;
-    color: var(--fct-muted);
-    margin: 3px 0 14px;
-  }
-
-  // ---- Champs -------------------------------------------------------------
-
-  .fctLabel {
-    font-size: 0.72em;
-    color: var(--fct-muted);
-  }
-
-  .fctField {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-    margin-bottom: 12px;
-    min-width: 0;
-
-    input,
-    select,
-    textarea {
-      width: 100%;
-      font-size: 0.76em;
-      font-family: inherit;
-      color: var(--fct-text);
-      background: var(--fct-field);
-      border: 1px solid var(--fct-line);
-      border-radius: 6px;
-      padding: 8px 11px;
-      resize: none;
-
-      &::placeholder {
-        color: #9aa4b2;
-      }
-
-      &:focus {
-        border-color: var(--fct-accent);
-        outline: none;
-      }
-    }
-  }
-
-  .fctGrid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 0 16px;
-  }
-
-  .fctChips {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 7px;
-    margin-bottom: 14px;
-  }
-
-  .fctChip {
-    font-size: 0.72em;
-    padding: 6px 13px;
+  .fctLigne {
     border: 1px solid var(--fct-line);
-    border-radius: 100px;
+    border-radius: var(--fct-rayon);
     background: var(--fct-card);
-    white-space: nowrap;
-
-    &:hover {
-      border-color: #c7d0dd;
-    }
-
-    &[data-active="true"] {
-      border-color: var(--fct-accent);
-      background: var(--fct-accent-soft);
-      color: var(--fct-accent);
-      font-weight: 600;
-    }
+    padding: 10px;
+    margin-bottom: 8px;
   }
 
-  .fctWarn {
-    margin-bottom: 12px;
-    padding: 8px 11px;
-    border-radius: 6px;
-    background: #fef7e0;
-    border: 1px solid #fadf9a;
-    color: #8a6100;
-    font-size: 0.72em;
-    line-height: 1.45;
-  }
-
-  .fctEmptyBox {
-    font-size: 0.74em;
-    color: var(--fct-muted);
-    line-height: 1.5;
-    padding: 16px;
-    border: 1px dashed var(--fct-line);
-    border-radius: 7px;
-    background: var(--fct-panel);
-  }
-
-  // ---- Liste des factures -------------------------------------------------
-
-  .fctList {
-    border: 1px solid var(--fct-line);
-    border-radius: 7px;
-    overflow: hidden;
-  }
-
-  .fctRow {
+  .fctLigneTete {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 9px 12px;
-    border-bottom: 1px solid var(--fct-line);
+    gap: 6px;
+    margin-bottom: 8px;
 
-    &:last-child {
-      border-bottom: none;
-    }
-
-    &:hover {
-      background: var(--fct-panel);
-    }
-
-    &[data-active="true"] {
-      background: var(--fct-accent-soft);
-    }
-
-    .fctRowNum {
-      font-size: 0.74em;
-      font-variant-numeric: tabular-nums;
-      color: var(--fct-muted);
-      flex-shrink: 0;
-      width: 66px;
-    }
-
-    .fctRowInfo {
+    input {
       flex-grow: 1;
       min-width: 0;
     }
-
-    .fctRowName {
-      font-size: 0.78em;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .fctRowMeta {
-      font-size: 0.66em;
-      color: var(--fct-muted);
-      margin-top: 1px;
-    }
-
-    .fctRowTotal {
-      font-size: 0.78em;
-      font-variant-numeric: tabular-nums;
-      flex-shrink: 0;
-      white-space: nowrap;
-    }
   }
 
-  .fctTag {
-    font-size: 0.65em;
-    padding: 3px 10px;
-    border-radius: 100px;
-    white-space: nowrap;
+  .fctIconBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
     flex-shrink: 0;
-    background: rgb(107 118 132 / 14%);
+    width: 28px;
+    height: 28px;
+    border-radius: 5px;
+    border: 1px solid var(--fct-line);
     color: var(--fct-muted);
 
-    &[data-tone="info"] {
-      background: var(--fct-accent-soft);
+    &:hover {
+      border-color: var(--fct-accent);
       color: var(--fct-accent);
     }
-    &[data-tone="ok"] {
-      background: rgb(24 128 56 / 12%);
-      color: var(--fct-green);
-    }
-    &[data-tone="late"] {
-      background: rgb(217 48 37 / 12%);
-      color: var(--fct-red);
-    }
-    &[data-tone="off"] {
-      background: rgb(122 132 147 / 15%);
-      color: var(--fct-grey);
-      text-decoration: line-through;
+
+    .uicon {
+      display: flex;
     }
   }
 
-  // ---- Tableau des lignes -------------------------------------------------
-
-  .fctTable {
-    border: 1px solid var(--fct-line);
-    border-radius: 7px;
-    overflow: hidden;
-  }
-
-  .fctTHead,
-  .fctTRow {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 66px 104px 66px 116px 26px;
-    align-items: center;
-    gap: 8px;
-    padding: 7px 10px;
-  }
-
-  .fctTHead {
-    background: var(--fct-panel);
-    border-bottom: 1px solid var(--fct-line);
-    font-size: 0.68em;
+  .fctLigneTotal {
+    text-align: right;
+    font-size: 0.78em;
     font-weight: 600;
-    color: var(--fct-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
+    font-variant-numeric: tabular-nums;
+    margin-top: 2px;
   }
 
-  .fctTRow {
+  .fctRecap {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 10px;
+    font-size: 0.76em;
+    color: var(--fct-muted);
+    padding: 6px 0;
+    border-top: 1px solid var(--fct-line);
+
+    strong {
+      color: var(--fct-text);
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    span {
+      min-width: 0;
+    }
+  }
+
+  .fctRecapFin {
+    font-size: 0.7em;
+    border-top: none;
+    padding: 2px 0;
+  }
+
+  .fctRecapTtc {
+    font-size: 0.86em;
+    color: var(--fct-text);
+    border-top: 2px solid var(--fct-line);
+    margin-top: 4px;
+    padding-top: 8px;
+
+    strong {
+      font-size: 1.1em;
+      color: var(--fct-accent);
+    }
+  }
+
+  .fctHisto {
+    display: flex;
+    flex-direction: column;
+    margin-top: 12px;
+  }
+
+  .fctHistoLigne {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
     border-bottom: 1px solid var(--fct-line);
 
     &:last-child {
       border-bottom: none;
     }
-
-    input {
-      width: 100%;
-      min-width: 0;
-      font-size: 0.75em;
-      font-family: inherit;
-      color: var(--fct-text);
-      background: transparent;
-      border: 1px solid transparent;
-      border-radius: 5px;
-      padding: 5px 7px;
-
-      &:hover {
-        border-color: var(--fct-line);
-      }
-
-      &:focus {
-        border-color: var(--fct-accent);
-        background: var(--fct-field);
-        outline: none;
-      }
-    }
-
-    .fctCell {
-      font-size: 0.75em;
-      font-variant-numeric: tabular-nums;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    // Désignation libre + reprise d'un article du Stock.
-    .fctDesigCell {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      min-width: 0;
-
-      input {
-        flex-grow: 1;
-        min-width: 0;
-      }
-
-      .fctArticlePick {
-        flex-shrink: 0;
-        width: 74px;
-        font-size: 0.68em;
-        font-family: inherit;
-        color: var(--fct-muted);
-        background: var(--fct-panel);
-        border: 1px solid var(--fct-line);
-        border-radius: 5px;
-        padding: 4px 5px;
-
-        &:focus {
-          border-color: var(--fct-accent);
-          outline: none;
-        }
-      }
-    }
-
-    .fctDel {
-      font-size: 0.76em;
-      color: var(--fct-muted);
-      text-align: center;
-
-      &:hover {
-        color: var(--fct-red);
-      }
-    }
   }
 
-  .fctRight {
-    text-align: right;
-  }
-
-  .fctLignesFoot {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 16px;
-    margin-top: 12px;
-  }
-
-  .fctBtnGhost {
-    font-size: 0.74em;
-    padding: 7px 14px;
-    border: 1px solid var(--fct-line);
-    border-radius: 6px;
-    background: var(--fct-card);
-    white-space: nowrap;
-
-    &:hover {
-      border-color: #c7d0dd;
-    }
-  }
-
-  .fctTotals {
-    min-width: 210px;
-    font-size: 0.76em;
-
-    > div {
-      display: flex;
-      justify-content: space-between;
-      gap: 20px;
-      padding: 4px 0;
-
-      span {
-        color: var(--fct-muted);
-      }
-
-      strong {
-        font-variant-numeric: tabular-nums;
-        font-weight: 600;
-      }
-    }
-
-    .fctTtc {
-      margin-top: 4px;
-      padding-top: 8px;
-      border-top: 1px solid var(--fct-line);
-      font-size: 1.1em;
-
-      strong {
-        color: var(--fct-accent);
-      }
-    }
-  }
-
-  // ---- Analytics ----------------------------------------------------------
-
-  .fctStatRow {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 10px;
-    margin-bottom: 16px;
-  }
-
-  .fctStatCard {
-    border: 1px solid var(--fct-line);
-    border-radius: 7px;
-    background: var(--fct-panel);
-    padding: 11px 12px;
+  .fctHistoInfo {
+    flex-grow: 1;
     min-width: 0;
-
-    &[data-alert="true"] {
-      border-color: var(--fct-red);
-
-      .fctStatVal {
-        color: var(--fct-red);
-      }
-    }
-
-    .fctStatVal {
-      font-size: 0.9em;
-      font-weight: 600;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .fctStatLbl {
-      font-size: 0.64em;
-      color: var(--fct-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-      margin-top: 2px;
-    }
   }
 
-  .fctBars {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-
-  .fctBarRow {
-    display: grid;
-    grid-template-columns: 96px minmax(0, 1fr) 150px;
-    align-items: center;
-    gap: 10px;
-    font-size: 0.72em;
-
-    .fctBarLabel {
-      color: var(--fct-muted);
-    }
-
-    .fctBarTrack {
-      height: 8px;
-      border-radius: 100px;
-      background: var(--fct-panel);
-      border: 1px solid var(--fct-line);
-      overflow: hidden;
-    }
-
-    .fctBarFill {
-      height: 100%;
-      background: var(--fct-grey);
-      transition: width 300ms ease;
-
-      &[data-tone="info"] {
-        background: var(--fct-accent);
-      }
-      &[data-tone="ok"] {
-        background: var(--fct-green);
-      }
-      &[data-tone="off"] {
-        background: var(--fct-grey);
-      }
-    }
-
-    .fctBarVal {
-      text-align: right;
-      font-variant-numeric: tabular-nums;
-      white-space: nowrap;
-    }
-  }
-
-  // ---- Panneau contextuel -------------------------------------------------
-
-  .fctSide {
-    border-left: 1px solid var(--fct-line);
-    background: var(--fct-panel);
-    padding: 16px 16px 22px;
-    overflow-y: auto;
-    min-height: 0;
-  }
-
-  .fctSideTitle {
+  .fctHistoTitre {
     font-size: 0.78em;
-    font-weight: 600;
-    margin-bottom: 12px;
+    font-variant-numeric: tabular-nums;
   }
 
-  .fctCard {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 5px;
-    text-align: center;
-    padding: 18px 14px;
-    min-height: 158px;
-    background: var(--fct-card);
-    border: 1px solid var(--fct-line);
-    border-radius: 10px;
-
-    .fctCardNum {
-      font-size: 0.72em;
-      font-variant-numeric: tabular-nums;
-      color: var(--fct-muted);
-    }
-
-    .fctCardClient {
-      font-size: 0.86em;
-      font-weight: 600;
-      max-width: 100%;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .fctCardTtc {
-      font-size: 1.15em;
-      font-weight: 600;
-      color: var(--fct-accent);
-      margin-top: 4px;
-      font-variant-numeric: tabular-nums;
-    }
-
-    .fctCardMeta {
-      font-size: 0.66em;
-      color: var(--fct-muted);
-      line-height: 1.4;
-    }
-
-    .fctCardEmpty {
-      font-size: 0.72em;
-      color: var(--fct-muted);
-      line-height: 1.5;
-    }
+  .fctHistoMeta {
+    font-size: 0.68em;
+    color: var(--fct-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-top: 1px;
   }
+
+  // ---- Boutons et états vides ---------------------------------------------
 
   .fctPrimary {
-    display: flex;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    margin-top: 14px;
-    padding: 10px 12px;
-    border-radius: 7px;
+    gap: 7px;
+    font-size: 0.74em;
+    font-weight: 600;
+    padding: 7px 14px;
+    border-radius: 6px;
     background: var(--fct-accent);
     color: #fff;
-    font-size: 0.76em;
-    font-weight: 600;
+    white-space: nowrap;
 
     .uicon {
       display: flex;
@@ -628,29 +797,20 @@
     }
   }
 
-  .fctSideBtns {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 7px;
-    margin-top: 10px;
-  }
-
-  .fctSideBtn,
-  .fctQuickBtn {
-    display: flex;
+  .fctBtnGhost {
+    display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 6px;
-    padding: 7px;
+    font-size: 0.73em;
+    padding: 7px 13px;
     border: 1px solid var(--fct-line);
     border-radius: 6px;
     background: var(--fct-card);
-    font-size: 0.71em;
     white-space: nowrap;
 
     .uicon {
       display: flex;
-      color: var(--fct-muted);
     }
 
     &:hover {
@@ -665,75 +825,85 @@
     &.fctDanger {
       color: var(--fct-red);
 
-      .uicon {
-        color: var(--fct-red);
+      &:hover {
+        border-color: var(--fct-red);
       }
     }
   }
 
-  .fctQuick {
-    margin-top: 16px;
-    border: 1px solid var(--fct-line);
-    border-radius: 8px;
-    background: var(--fct-card);
-    padding: 11px;
+  .fctFormActions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin: 14px 0 4px;
+  }
 
-    .fctQuickTitle {
-      font-size: 0.7em;
-      color: var(--fct-muted);
-      margin-bottom: 8px;
-    }
+  .fctNote {
+    font-size: 0.7em;
+    line-height: 1.5;
+    color: var(--fct-muted);
+    background: var(--fct-accent-soft);
+    border-radius: 6px;
+    padding: 8px 10px;
+    margin-top: 12px;
+  }
 
-    .fctQuickBtns {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
+  .fctVide {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    flex-grow: 1;
+    padding: 40px;
+    text-align: center;
+    font-size: 0.8em;
+    color: var(--fct-muted);
+  }
 
-    .fctQuickBtn {
-      background: var(--fct-panel);
-    }
+  .fctEmptyBox {
+    padding: 14px;
+    border: 1px dashed var(--fct-line);
+    border-radius: 6px;
+    font-size: 0.74em;
+    line-height: 1.5;
+    color: var(--fct-muted);
   }
 
   .fctNotice {
-    margin-top: 12px;
-    font-size: 0.71em;
-    color: var(--fct-accent);
-    line-height: 1.45;
+    position: absolute;
+    left: 50%;
+    bottom: 16px;
+    transform: translateX(-50%);
+    padding: 8px 16px;
+    border-radius: 100px;
+    background: #1f2733;
+    color: #fff;
+    font-size: 0.74em;
+    box-shadow: 0 6px 20px rgb(0 0 0 / 22%);
+    z-index: 5;
   }
 }
 
-body[data-theme="dark"] .factApp {
-  --fct-bg: #1b1b22;
-  --fct-panel: #202029;
-  --fct-card: #262630;
+body[data-theme="dark"] .fctApp {
+  --fct-bg: #1e1e26;
+  --fct-panel: #262630;
+  --fct-card: #2b2b36;
   --fct-line: #35353f;
   --fct-text: #e8e8ee;
   --fct-muted: #9a9aa8;
-  --fct-accent: #6f8dff;
-  --fct-accent-soft: #2a3050;
-  --fct-field: #262630;
-  --fct-green: #6cd08a;
-  --fct-amber: #e0b060;
-  --fct-red: #f08078;
-  --fct-grey: #8b8b98;
+  --fct-accent: #6ea8ff;
+  --fct-accent-soft: #26344a;
+  --fct-field: #23232c;
+  --fct-green: #6cc98a;
+  --fct-amber: #e0a458;
+  --fct-red: #e2716a;
 
-  .fctNav .fctNavItem:hover,
-  .fctChip:hover,
-  .fctBtnGhost:hover,
-  .fctSideBtn:hover,
-  .fctQuickBtn:hover {
+  .fctBtnGhost:hover {
     border-color: #4a4a58;
-    background: rgb(255 255 255 / 4%);
   }
 
-  .fctWarn {
-    background: #3a3020;
-    border-color: #5d4d2a;
-    color: #f0cd7a;
-  }
-
-  .fctPrimary:hover {
-    background: #5f7cf0;
+  .fctNotice {
+    background: #3a3a48;
   }
 }

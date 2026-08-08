@@ -1,28 +1,27 @@
-var wps = localStorage.getItem("wps") || 0;
+var wps = Number(localStorage.getItem("wps")) || 0;
 var locked = localStorage.getItem("locked");
 
+/// Fonds livrés avec CompanyOS.
+///
+/// Ce sont des SVG et non des JPEG : ils reprennent la tuile squircle du jeu
+/// d'icônes, pèsent environ 1 Ko au lieu de 2 Mo, et restent nets quelle que
+/// soit la définition de l'écran. Les fonds Windows 11 hérités du fork
+/// (default/, dark/, ThemeA à ThemeD) ont été retirés.
 const walls = [
-  "default/img0.jpg",
-  "dark/img0.jpg",
-  "ThemeA/img0.jpg",
-  "ThemeA/img1.jpg",
-  "ThemeA/img2.jpg",
-  "ThemeA/img3.jpg",
-  "ThemeB/img0.jpg",
-  "ThemeB/img1.jpg",
-  "ThemeB/img2.jpg",
-  "ThemeB/img3.jpg",
-  "ThemeC/img0.jpg",
-  "ThemeC/img1.jpg",
-  "ThemeC/img2.jpg",
-  "ThemeC/img3.jpg",
-  "ThemeD/img0.jpg",
-  "ThemeD/img1.jpg",
-  "ThemeD/img2.jpg",
-  "ThemeD/img3.jpg",
+  "clair/img0.svg",
+  "sombre/img0.svg",
+  "aurore/img0.svg",
+  "prairie/img0.svg",
+  "ambre/img0.svg",
+  "nuit/img0.svg",
 ];
 
-const themes = ["default", "dark", "ThemeA", "ThemeB", "ThemeD", "ThemeC"];
+const themes = ["clair", "sombre", "aurore", "prairie", "ambre", "nuit"];
+
+// La liste est passée de 18 à 6 entrées : un `wps` mémorisé par une session
+// antérieure peut pointer hors du tableau et donner un `src` indéfini, donc
+// un bureau sans fond. On ramène dans les bornes.
+if (!(wps >= 0 && wps < walls.length)) wps = 0;
 
 const defState = {
   themes: themes,
@@ -80,25 +79,22 @@ const wallReducer = (state = defState, action) => {
         locked: true,
         act: "shutdn",
       };
+    /// Accepte un indice ou un chemin de fond. `wps` reste **toujours** un
+    /// indice : il y stockait auparavant le chemin, ce qui cassait
+    /// « fond suivant » (l'incrément donnait NaN) et faisait perdre le
+    /// choix au rechargement.
     case "WALLSET":
-      var isIndex = !Number.isNaN(parseInt(action.payload)),
-        wps = 0,
-        src = "";
+      var idx = Number.isInteger(Number(action.payload))
+        ? Number(action.payload)
+        : walls.findIndex((item) => item === action.payload);
 
-      if (isIndex) {
-        wps = localStorage.getItem("wps");
-        src = walls[wps] ? walls[wps] : walls[0];
-      } else {
-        const idx = walls.findIndex((item) => item === action.payload);
-        localStorage.setItem("wps", idx);
-        src = action.payload;
-        wps = walls[idx];
-      }
+      if (idx < 0 || idx >= walls.length) idx = 0;
+      localStorage.setItem("wps", idx);
 
       return {
         ...state,
-        wps: wps,
-        src: src,
+        wps: idx,
+        src: walls[idx],
       };
     default:
       return state;

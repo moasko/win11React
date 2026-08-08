@@ -150,6 +150,15 @@
       }
     }
 
+    // Un code se relit caractère par caractère : chasse fixe et lettres
+    // espacées, pour distinguer d'un coup d'œil un 8 d'un B.
+    input.authCode {
+      font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+      font-size: 15px;
+      letter-spacing: 0.12em;
+      text-align: center;
+    }
+
     .authError {
       margin-top: 10px;
       font-size: 12px;

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" role="img" aria-label="Signature">
+  <path d="M13 0h22a13 13 0 0 1 13 13v22a13 13 0 0 1-13 13H4a4 4 0 0 1-4-4V13A13 13 0 0 1 13 0Z" fill="#7C3AED"/>
+  <path d="M9 27c3-8 6-13 8-13s1 6-1 11 0 6 2 4 3-6 5-6 0 6 2 6 3-3 5-3" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M9.5 36.5h29" stroke="#fff" stroke-width="2.2" stroke-linecap="round" opacity=".45"/>
+  <path d="M33 30.5 39.5 24a2.4 2.4 0 0 0-3.4-3.4L29.6 27l-1.1 4.5Z" fill="#fff"/>
+  <path d="M29.6 27l3.4 3.5" stroke="#7C3AED" stroke-width="1.2" opacity=".45"/>
+</svg>

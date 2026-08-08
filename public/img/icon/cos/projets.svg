@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" role="img" aria-label="Projets">
+  <path d="M13 0h22a13 13 0 0 1 13 13v22a13 13 0 0 1-13 13H4a4 4 0 0 1-4-4V13A13 13 0 0 1 13 0Z" fill="#4338CA"/>
+  <rect x="12.5" y="13" width="7" height="22" rx="2.5" fill="#fff"/>
+  <rect x="20.5" y="13" width="7" height="15" rx="2.5" fill="#fff" opacity=".75"/>
+  <rect x="28.5" y="13" width="7" height="10" rx="2.5" fill="#fff" opacity=".5"/>
+</svg>

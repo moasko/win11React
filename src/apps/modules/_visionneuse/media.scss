@@ -1,0 +1,778 @@
+// Visionneuses système : Photos, Musique, Vidéo.
+//
+// Parti pris : la scène est sombre et pleine, les commandes flottent
+// par-dessus et s'effacent au repos. C'est ce que font les lecteurs qu'on
+// aime utiliser — le contenu occupe la place, l'outillage se fait oublier.
+// Le reste de la charte est celui des modules : jetons sur la classe
+// racine, déclinaison sombre en fin de fichier.
+
+.mediaApp {
+  --md-bg: #ffffff;
+  --md-panneau: #f7f8fa;
+  --md-scene: #17171c;
+  --md-line: #e3e6eb;
+  --md-text: #1f2733;
+  --md-muted: #6b7684;
+  --md-accent: #3b82f6;
+  --md-accent-soft: #eaf1fe;
+  --md-verre: rgb(22 22 28 / 78%);
+  --md-verre-bord: rgb(255 255 255 / 12%);
+
+  background: var(--md-bg);
+  color: var(--md-text);
+
+  &.floatTab[data-size="mini"] {
+    width: 66%;
+    height: 74%;
+    top: 10%;
+    left: 17%;
+    min-width: 560px;
+    min-height: 420px;
+  }
+
+  .windowScreen {
+    flex-grow: 1;
+    min-height: 0;
+    background: var(--md-bg);
+  }
+
+  button {
+    font-family: inherit;
+    border: none;
+    background: none;
+    color: inherit;
+    cursor: default;
+  }
+
+  // ---- Écran d'accueil ----------------------------------------------------
+
+  .mdAccueil {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex-grow: 1;
+    gap: 10px;
+    padding: 30px;
+    text-align: center;
+  }
+
+  .mdAccueilIcone {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 74px;
+    height: 74px;
+    border-radius: 22px;
+    background: var(--md-accent-soft);
+    color: var(--md-accent);
+    margin-bottom: 4px;
+
+    .uicon {
+      display: flex;
+    }
+  }
+
+  .mdAccueilTitre {
+    font-size: 0.92em;
+    font-weight: 600;
+  }
+
+  .mdAccueilAide {
+    font-size: 0.76em;
+    color: var(--md-muted);
+    max-width: 320px;
+    line-height: 1.6;
+  }
+
+  // ---- États --------------------------------------------------------------
+
+  .mdChargement,
+  .mdErreur {
+    position: absolute;
+    z-index: 4;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    max-width: 78%;
+    padding: 12px 18px;
+    border-radius: 12px;
+    background: var(--md-verre);
+    border: 1px solid var(--md-verre-bord);
+    backdrop-filter: blur(8px);
+    color: #f2f4f8;
+    font-size: 0.76em;
+    line-height: 1.55;
+
+    .uicon {
+      display: flex;
+      flex-shrink: 0;
+    }
+  }
+
+  .mdErreur {
+    color: #ffb4ad;
+  }
+
+  .mdSpinner {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 2px solid rgb(255 255 255 / 25%);
+    border-top-color: #fff;
+    animation: mdTourne 700ms linear infinite;
+  }
+
+  @keyframes mdTourne {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  // ---- Scène --------------------------------------------------------------
+
+  .mdScene {
+    position: relative;
+    flex-grow: 1;
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .mdSceneSombre {
+    background:
+      radial-gradient(120% 100% at 50% 0%, #24242c 0%, #131318 70%);
+
+    &[data-glisse="true"] {
+      cursor: grab;
+
+      &:active {
+        cursor: grabbing;
+      }
+    }
+  }
+
+  .mdImage {
+    transform-origin: center;
+    transition: transform 140ms ease-out;
+    user-select: none;
+    -webkit-user-select: none;
+
+    // Ajusté à la fenêtre par défaut : on voit l'image entière d'emblée.
+    &[data-ajuste="true"] {
+      max-width: calc(100% - 56px);
+      max-height: calc(100% - 56px);
+    }
+  }
+
+  // ---- Bandeau du haut ----------------------------------------------------
+
+  .mdEntete {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 3;
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    padding: 12px 18px 22px;
+    background: linear-gradient(rgb(0 0 0 / 55%), transparent);
+    color: #fff;
+    opacity: 0;
+    transition: opacity 180ms ease;
+    pointer-events: none;
+
+    .mdNom {
+      font-size: 0.8em;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .mdInfo {
+      color: rgb(255 255 255 / 70%);
+      flex-shrink: 0;
+    }
+  }
+
+  .mdScene:hover .mdEntete,
+  .mdScene[data-controles="true"] .mdEntete {
+    opacity: 1;
+  }
+
+  .mdInfo {
+    font-size: 0.7em;
+    color: var(--md-muted);
+    white-space: nowrap;
+  }
+
+  // ---- Commandes flottantes ----------------------------------------------
+
+  .mdFlottant {
+    position: absolute;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%) translateY(8px);
+    z-index: 4;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px;
+    border-radius: 14px;
+    background: var(--md-verre);
+    border: 1px solid var(--md-verre-bord);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 10px 30px rgb(0 0 0 / 38%);
+    opacity: 0;
+    transition: opacity 180ms ease, transform 180ms ease;
+  }
+
+  .mdScene:hover .mdFlottant {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  .mdSep {
+    width: 1px;
+    height: 18px;
+    margin: 0 4px;
+    background: rgb(255 255 255 / 16%);
+  }
+
+  // Bouton rond, l'unité de base des commandes.
+  .mdRond {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 30px;
+    height: 30px;
+    padding: 0 8px;
+    border-radius: 9px;
+    color: #e8eaf0;
+    font-size: 0.7em;
+    transition: background 120ms ease, color 120ms ease;
+
+    .uicon {
+      display: flex;
+    }
+
+    &:hover {
+      background: rgb(255 255 255 / 14%);
+      color: #fff;
+    }
+
+    &[data-actif="true"] {
+      background: var(--md-accent);
+      color: #fff;
+    }
+  }
+
+  .mdRondTexte {
+    min-width: 58px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  // Flèches de galerie, collées aux bords.
+  .mdFleche {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--md-verre);
+    border: 1px solid var(--md-verre-bord);
+    backdrop-filter: blur(8px);
+    color: #fff;
+    opacity: 0;
+    transition: opacity 160ms ease, background 120ms ease;
+
+    .uicon {
+      display: flex;
+    }
+
+    &:hover {
+      background: var(--md-accent);
+    }
+  }
+
+  .mdFlecheG {
+    left: 14px;
+  }
+
+  .mdFlecheD {
+    right: 14px;
+  }
+
+  .mdScene:hover .mdFleche {
+    opacity: 1;
+  }
+
+  // ---- Pellicule (Photos) -------------------------------------------------
+
+  .mdPellicule {
+    display: flex;
+    gap: 8px;
+    padding: 10px 14px;
+    overflow-x: auto;
+    background: var(--md-panneau);
+    border-top: 1px solid var(--md-line);
+    flex-shrink: 0;
+  }
+
+  .mdVignette {
+    position: relative;
+    flex-shrink: 0;
+    width: 74px;
+    height: 54px;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #2a2a32;
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+    transition: outline-color 140ms ease, transform 140ms ease;
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .mdVignetteVide {
+      display: block;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(100deg, #2a2a32 30%, #35353f 50%, #2a2a32 70%);
+      background-size: 250% 100%;
+      animation: mdBalaye 1.2s linear infinite;
+    }
+
+    &:hover {
+      transform: translateY(-2px);
+    }
+
+    &[data-actif="true"] {
+      outline-color: var(--md-accent);
+    }
+  }
+
+  @keyframes mdBalaye {
+    to {
+      background-position: -150% 0;
+    }
+  }
+
+  // ---- Barre de progression commune --------------------------------------
+
+  .mdBarreTemps {
+    position: relative;
+    flex-grow: 1;
+    padding: 7px 0;
+    cursor: default;
+
+    .mdPisteFond {
+      height: 4px;
+      border-radius: 3px;
+      background: rgb(128 128 140 / 34%);
+      overflow: visible;
+    }
+
+    .mdPisteLue {
+      position: relative;
+      height: 100%;
+      border-radius: 3px;
+      background: var(--md-accent);
+    }
+
+    .mdCurseur {
+      position: absolute;
+      right: 0;
+      top: 50%;
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      background: #fff;
+      border: 2px solid var(--md-accent);
+      transform: translate(50%, -50%) scale(0);
+      transition: transform 140ms ease;
+    }
+
+    &:hover {
+      .mdPisteFond {
+        height: 6px;
+      }
+
+      .mdCurseur {
+        transform: translate(50%, -50%) scale(1);
+      }
+    }
+
+    .mdApercuTemps {
+      position: absolute;
+      bottom: 100%;
+      transform: translateX(-50%);
+      padding: 3px 7px;
+      border-radius: 6px;
+      background: #101014;
+      color: #fff;
+      font-size: 0.64em;
+      font-variant-numeric: tabular-nums;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+  }
+
+  // ---- Lecteur audio ------------------------------------------------------
+
+  .mdLecteur {
+    display: flex;
+    flex-grow: 1;
+    min-height: 0;
+  }
+
+  .mdScèneAudio {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex-grow: 1;
+    min-width: 0;
+    gap: 10px;
+    padding: 26px 30px;
+    background: radial-gradient(120% 90% at 50% 0%, #262633 0%, #15151b 72%);
+    color: #eef0f5;
+  }
+
+  .mdPochette {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 220px;
+    height: 130px;
+    border-radius: 16px;
+    overflow: hidden;
+    background: linear-gradient(140deg, #3b82f6 0%, #8b5cf6 55%, #ec4899 100%);
+    box-shadow: 0 16px 40px rgb(0 0 0 / 45%);
+    color: rgb(255 255 255 / 92%);
+
+    .uicon {
+      display: flex;
+      position: relative;
+      z-index: 2;
+      transition: opacity 250ms ease;
+    }
+
+    // Pendant la lecture, le visualiseur prend la place du pictogramme.
+    &[data-anime="true"] .uicon {
+      opacity: 0.18;
+    }
+  }
+
+  .mdVisu {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    opacity: 0.95;
+  }
+
+  .mdMeta {
+    text-align: center;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .mdTitre {
+    font-size: 0.94em;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .mdScèneAudio .mdInfo {
+    color: rgb(255 255 255 / 58%);
+    margin-top: 2px;
+  }
+
+  .mdTemps {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    width: 100%;
+    max-width: 430px;
+    margin-top: 6px;
+    font-size: 0.68em;
+    font-variant-numeric: tabular-nums;
+    color: rgb(255 255 255 / 62%);
+  }
+
+  .mdControles {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 2px;
+  }
+
+  .mdPlay {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--md-accent);
+    color: #fff;
+    box-shadow: 0 8px 22px rgb(59 130 246 / 45%);
+    transition: transform 120ms ease, filter 120ms ease;
+
+    .uicon {
+      display: flex;
+    }
+
+    &:hover {
+      filter: brightness(1.1);
+      transform: scale(1.05);
+    }
+  }
+
+  .mdVolumeLigne {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 2px;
+  }
+
+  .mdVolume {
+    width: 92px;
+    accent-color: var(--md-accent);
+  }
+
+  // ---- File d'attente -----------------------------------------------------
+
+  .mdListe {
+    width: 244px;
+    flex-shrink: 0;
+    overflow-y: auto;
+    padding: 12px 10px;
+    background: var(--md-panneau);
+    border-left: 1px solid var(--md-line);
+  }
+
+  .mdListeTitre {
+    font-size: 0.66em;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--md-muted);
+    padding: 0 8px 8px;
+  }
+
+  .mdMorceau {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 9px;
+    border-radius: 8px;
+    font-size: 0.73em;
+
+    .mdRang {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 18px;
+      flex-shrink: 0;
+      font-size: 0.9em;
+      color: var(--md-muted);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .mdMorceauNom {
+      flex-grow: 1;
+      min-width: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .mdMorceauTaille {
+      flex-shrink: 0;
+      font-size: 0.88em;
+      color: var(--md-muted);
+    }
+
+    &:hover {
+      background: var(--md-accent-soft);
+    }
+
+    &[data-actif="true"] {
+      background: var(--md-accent-soft);
+      color: var(--md-accent);
+      font-weight: 600;
+
+      .mdMorceauTaille {
+        color: var(--md-accent);
+      }
+    }
+  }
+
+  // Trois barres qui dansent devant le morceau en cours.
+  .mdOndes {
+    display: flex;
+    align-items: flex-end;
+    gap: 1.5px;
+    height: 11px;
+
+    i {
+      width: 2px;
+      background: var(--md-accent);
+      border-radius: 1px;
+      animation: mdOnde 900ms ease-in-out infinite;
+
+      &:nth-child(2) {
+        animation-delay: 160ms;
+      }
+
+      &:nth-child(3) {
+        animation-delay: 320ms;
+      }
+    }
+  }
+
+  @keyframes mdOnde {
+    0%,
+    100% {
+      height: 3px;
+    }
+    50% {
+      height: 11px;
+    }
+  }
+
+  // ---- Vidéo --------------------------------------------------------------
+
+  .mdSceneVideo {
+    background: #000;
+
+    // Au repos, le curseur disparaît avec les commandes.
+    &[data-controles="false"] {
+      cursor: none;
+    }
+  }
+
+  .mdVideo {
+    max-width: 100%;
+    max-height: 100%;
+    outline: none;
+  }
+
+  .mdPlayCentral {
+    position: absolute;
+    z-index: 4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 74px;
+    height: 74px;
+    border-radius: 50%;
+    background: var(--md-verre);
+    border: 1px solid var(--md-verre-bord);
+    backdrop-filter: blur(10px);
+    color: #fff;
+    box-shadow: 0 12px 34px rgb(0 0 0 / 45%);
+    transition: transform 140ms ease, background 140ms ease;
+
+    .uicon {
+      display: flex;
+      margin-left: 4px; // le triangle paraît centré
+    }
+
+    &:hover {
+      background: var(--md-accent);
+      transform: scale(1.06);
+    }
+  }
+
+  .mdBarreVideo {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 5;
+    padding: 26px 16px 10px;
+    background: linear-gradient(transparent, rgb(0 0 0 / 78%) 40%);
+    color: #e8eaf0;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 180ms ease, transform 180ms ease;
+  }
+
+  .mdSceneVideo[data-controles="true"] .mdBarreVideo {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .mdBoutonsVideo {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 2px;
+
+    .mdSpacer {
+      flex-grow: 1;
+    }
+
+    .mdVolume {
+      width: 72px;
+    }
+  }
+
+  .mdChrono {
+    margin-left: 6px;
+    font-size: 0.68em;
+    font-variant-numeric: tabular-nums;
+    color: rgb(255 255 255 / 74%);
+    white-space: nowrap;
+  }
+
+  .mdVitesse {
+    font-family: inherit;
+    font-size: 0.68em;
+    color: #e8eaf0;
+    background: rgb(255 255 255 / 10%);
+    border: 1px solid var(--md-verre-bord);
+    border-radius: 8px;
+    padding: 5px 7px;
+
+    &:focus {
+      outline: none;
+      border-color: var(--md-accent);
+    }
+
+    option {
+      color: #1f2733;
+    }
+  }
+}
+
+body[data-theme="dark"] .mediaApp {
+  --md-bg: #1e1e26;
+  --md-panneau: #23232c;
+  --md-line: #33333d;
+  --md-text: #e8e8ee;
+  --md-muted: #9a9aa8;
+  --md-accent: #6f8dff;
+  --md-accent-soft: #2f3a4e;
+}

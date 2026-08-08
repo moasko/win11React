@@ -12,9 +12,10 @@
 import store from "../reducers";
 import { api } from "../api/client";
 import { requestSave } from "./saveRequest";
+import { notifier } from "./notifications";
 
 /// Trouve le dossier `name` à la racine du cloud, ou le crée.
-const ensureRootFolder = async (name) => {
+export const ensureRootFolder = async (name) => {
   const root = await api.listFiles(null);
   const found = root.find((n) => n.type === "FOLDER" && n.name === name);
   if (found) return found.id;
@@ -56,6 +57,15 @@ const putAt = async (blob, filename, parentId) => {
 
   // L'Explorateur se rafraîchit, le quota affiché suit.
   store.dispatch({ type: "CLOUD_TOUCH" });
+
+  // Tout fichier écrit dans le cloud se signale : c'est la trace qui permet
+  // de retrouver un export généré par une app sans savoir où il est allé.
+  notifier({
+    titre: "Fichier enregistré",
+    message: `« ${name} » est dans votre cloud.`,
+    app: "Explorateur",
+    ton: "success",
+  });
   try {
     const usage = await api.usage();
     store.dispatch({ type: "SESSION_USAGE", payload: { usedBytes: usage.usedBytes } });

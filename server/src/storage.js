@@ -25,6 +25,13 @@ const localDriver = {
     return createReadStream(resolve(env.storageLocalPath, key));
   },
 
+  /// Lecture d'une tranche d'octets, bornes comprises. C'est ce qui permet
+  /// à une balise <video> de démarrer sans attendre le fichier entier et
+  /// de se déplacer dans la timeline.
+  readRange(key, start, end) {
+    return createReadStream(resolve(env.storageLocalPath, key), { start, end });
+  },
+
   async remove(key) {
     await rm(resolve(env.storageLocalPath, key), { force: true });
   },

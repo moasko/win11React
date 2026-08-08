@@ -1,0 +1,149 @@
+// Menu contextuel — voir MenuContextuel.jsx.
+//
+// Jetons propres au menu : il apparaît par-dessus n'importe quoi — bureau,
+// module, visionneuse — et ne peut donc hériter d'aucune palette.
+
+.cosMenuFond {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+}
+
+.cosMenu {
+  --cosm-card: #ffffff;
+  --cosm-line: #e3e6eb;
+  --cosm-text: #1f2733;
+  --cosm-muted: #6b7684;
+  --cosm-accent: #1a73e8;
+  --cosm-danger: #d93025;
+
+  position: fixed;
+  min-width: 216px;
+  max-width: 320px;
+  padding: 5px;
+  border: 1px solid var(--cosm-line);
+  border-radius: 9px;
+  background: var(--cosm-card);
+  color: var(--cosm-text);
+  box-shadow: 0 10px 34px rgb(0 0 0 / 18%);
+  font-size: 13px;
+  user-select: none;
+  animation: cosMenuEntree 90ms ease-out;
+}
+
+// Court et discret : un menu contextuel doit apparaître, pas se donner en
+// spectacle — on le rouvre des dizaines de fois par heure.
+@keyframes cosMenuEntree {
+  from {
+    opacity: 0;
+    transform: translateY(-3px);
+  }
+}
+
+.cosMenuItem {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 10px;
+  border-radius: 6px;
+  white-space: nowrap;
+  cursor: default;
+
+  &[data-survol="true"] {
+    background: rgb(107 118 132 / 12%);
+  }
+
+  &[data-danger="true"] {
+    color: var(--cosm-danger);
+
+    &[data-survol="true"] {
+      background: rgb(217 48 37 / 12%);
+    }
+  }
+
+  // Une entrée désactivée reste visible : elle apprend ce qui existe, alors
+  // que la masquer laisse croire que la fonction n'existe pas du tout.
+  &[data-desactive="true"] {
+    color: var(--cosm-muted);
+    opacity: 0.5;
+    pointer-events: none;
+  }
+}
+
+// Gouttière réservée même sans icône, sinon les libellés d'un même menu ne
+// s'alignent pas entre eux.
+.cosMenuIcone {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  flex-shrink: 0;
+  color: var(--cosm-muted);
+
+  .uicon {
+    display: flex;
+  }
+}
+
+.cosMenuNom {
+  flex-grow: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cosMenuRaccourci {
+  flex-shrink: 0;
+  font-size: 0.82em;
+  color: var(--cosm-muted);
+}
+
+.cosMenuFleche {
+  display: flex;
+  flex-shrink: 0;
+  color: var(--cosm-muted);
+}
+
+.cosMenuTrait {
+  height: 1px;
+  margin: 5px 8px;
+  background: var(--cosm-line);
+}
+
+.cosMenuTitre {
+  padding: 7px 10px 4px;
+  font-size: 0.72em;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--cosm-muted);
+  white-space: nowrap;
+}
+
+// Le sous-menu est rendu dans un span de largeur nulle : il sert seulement
+// d'ancre pour lire la position de son parent.
+.cosMenuAncre {
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+
+body[data-theme="dark"] .cosMenu {
+  --cosm-card: #2a2a34;
+  --cosm-line: #3a3a46;
+  --cosm-text: #e8e8ee;
+  --cosm-muted: #9a9aa8;
+  --cosm-accent: #6ea8ff;
+  --cosm-danger: #e2716a;
+
+  box-shadow: 0 10px 34px rgb(0 0 0 / 42%);
+
+  .cosMenuItem[data-survol="true"] {
+    background: rgb(255 255 255 / 10%);
+  }
+
+  .cosMenuItem[data-danger="true"][data-survol="true"] {
+    background: rgb(226 113 106 / 16%);
+  }
+}

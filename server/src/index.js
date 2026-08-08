@@ -7,10 +7,21 @@ import authRoutes from "./routes/auth.js";
 import appRoutes from "./routes/apps.js";
 import fileRoutes from "./routes/files.js";
 import recordRoutes from "./routes/records.js";
+import auditRoutes from "./routes/audit.js";
+import notificationRoutes from "./routes/notifications.js";
+import webRoutes from "./routes/web.js";
+import billingRoutes from "./routes/billing.js";
 
 const app = Fastify({ logger: true });
 
-await app.register(cors, { origin: env.corsOrigin, credentials: true });
+await app.register(cors, {
+  origin: env.corsOrigin,
+  credentials: true,
+  // Sans cela, le navigateur cache les en-têtes de plage au code de la
+  // page : la lecture en flux marche, mais rien côté client ne peut lire
+  // la taille ni la position du morceau reçu.
+  exposedHeaders: ["Content-Range", "Accept-Ranges", "Content-Length"],
+});
 await app.register(multipart, {
   limits: { fileSize: 512 * 1024 * 1024 }, // 512 Mo par fichier
 });
@@ -21,6 +32,10 @@ await app.register(authRoutes, { prefix: "/api/auth" });
 await app.register(appRoutes, { prefix: "/api/apps" });
 await app.register(fileRoutes, { prefix: "/api/files" });
 await app.register(recordRoutes, { prefix: "/api/records" });
+await app.register(auditRoutes, { prefix: "/api/audit" });
+await app.register(notificationRoutes, { prefix: "/api/notifications" });
+await app.register(webRoutes, { prefix: "/api/web" });
+await app.register(billingRoutes, { prefix: "/api/facturation" });
 
 const shutdown = async () => {
   await app.close();

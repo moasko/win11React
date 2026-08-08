@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" role="img" aria-label="Stock">
+  <path d="M13 0h22a13 13 0 0 1 13 13v22a13 13 0 0 1-13 13H4a4 4 0 0 1-4-4V13A13 13 0 0 1 13 0Z" fill="#059669"/>
+  <rect x="18.5" y="12.5" width="11" height="11" rx="2.5" fill="#fff" opacity=".75"/>
+  <rect x="12.5" y="25" width="11" height="11" rx="2.5" fill="#fff"/>
+  <rect x="24.5" y="25" width="11" height="11" rx="2.5" fill="#fff" opacity=".55"/>
+</svg>

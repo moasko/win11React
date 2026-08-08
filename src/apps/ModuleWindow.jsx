@@ -11,9 +11,15 @@ import { ToolBar } from "../utils/general";
 ///
 /// La fenêtre (déplacement, réduire/agrandir/fermer, z-index) est gérée ici.
 export const ModuleWindow = ({ manifest, className = "", children }) => {
-  const wnapp = useSelector((state) => state.apps[manifest.icon]);
+  // L'état de fenêtre est indexé par l'identifiant de l'application, pas
+  // par son icône : deux apps peuvent partager la même image.
+  const wnapp = useSelector((state) => state.apps[manifest.id || manifest.icon]);
 
   // Module non installé : l'état n'existe pas, la fenêtre non plus.
+  //
+  // Le montage à la demande, lui, se décide plus haut : voir `AppMontee`
+  // dans src/App.jsx. Ici il serait sans effet — le composant du module
+  // englobe cette fenêtre, ses effets tournent donc avant d'arriver ici.
   if (!wnapp) return null;
 
   return (

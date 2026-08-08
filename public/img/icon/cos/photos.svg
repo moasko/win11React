@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" role="img" aria-label="Photos">
+  <defs><clipPath id="cosPhotosClip"><rect x="12" y="14" width="24" height="20" rx="3.5"/></clipPath></defs>
+  <path d="M13 0h22a13 13 0 0 1 13 13v22a13 13 0 0 1-13 13H4a4 4 0 0 1-4-4V13A13 13 0 0 1 13 0Z" fill="#DB2777"/>
+  <rect x="12" y="14" width="24" height="20" rx="3.5" fill="#fff"/>
+  <g clip-path="url(#cosPhotosClip)">
+    <path d="M12 34l7.5-8.5 5 5.5 5.5-6L36 34Z" fill="#DB2777" opacity=".5"/>
+  </g>
+  <circle cx="18.5" cy="20.5" r="2.8" fill="#DB2777" opacity=".5"/>
+</svg>

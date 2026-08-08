@@ -1,68 +1,174 @@
-﻿import React, { useState, useEffect } from "react";
+﻿import React, { useEffect, useMemo, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { Icon } from "../../utils/general";
+import { Avatar } from "../../apps/Avatar";
+import { menuContextuel } from "../../apps/menuRequest";
+import { ouvrirFenetre } from "../../apps/windows";
+import { clearToken } from "../../api/client";
+import { detachAllModules } from "../../apps/sync";
+import { reinitialiserApparence } from "../../apps/appearance";
+import { resynchroniserNotifications } from "../../apps/notifications";
+
+/// « Ajouté récemment », « il y a 5 min »… à partir d'un nombre de minutes.
+/// Calculé à chaque affichage : l'ancienne version écrasait le nombre par
+/// son libellé dans le store, ce qui figeait l'affichage pour la session.
+const libelleUtilisation = (minutes) => {
+  if (minutes == null) return "";
+  if (minutes < 0) return "Ajouté récemment";
+  if (minutes < 10) return "À l'instant";
+  if (minutes < 60) return `${minutes} min`;
+  return `${Math.floor(minutes / 60)} h`;
+};
 
 export const StartMenu = () => {
   const { align } = useSelector((state) => state.taskbar);
-  const start = useSelector((state) => {
-    var arr = state.startmenu,
-      ln = (6 - (arr.pnApps.length % 6)) % 6;
+  // Ce sélecteur écrivait dans le store à chaque rendu, de trois façons :
+  //
+  //   — `arr.pnApps.push(…)` ajoutait des cases vides **dans le tableau du
+  //     store**, faute de copie ;
+  //   — `arr.rcApps[i].lastUsed = "À l'instant"` remplaçait un nombre de
+  //     minutes par du texte, **définitivement** : la donnée d'origine était
+  //     perdue au premier rendu, et le libellé se figeait pour la session ;
+  //   — `arr.contApps = …` rangeait des données dérivées dans l'état.
+  //
+  // Tout cela se calcule ici, à partir des tranches brutes, sans y toucher.
+  const menu = useSelector((state) => state.startmenu);
+  const appsBrutes = useSelector((state) => state.apps);
 
-    for (var i = 0; i < ln; i++) {
-      arr.pnApps.push({
-        empty: true,
-      });
+  const start = useMemo(() => {
+    // Cases vides pour compléter la dernière rangée de six.
+    const manquantes = (6 - (menu.pnApps.length % 6)) % 6;
+    const pnApps = [
+      ...menu.pnApps,
+      ...Array.from({ length: manquantes }, () => ({ empty: true })),
+    ];
+
+    const rcApps = menu.rcApps.map((app) => ({
+      ...app,
+      // Calculé à l'affichage, jamais écrit : le nombre de minutes reste
+      // intact et le libellé se met à jour tout seul.
+      derniereUtilisation: libelleUtilisation(app.lastUsed),
+    }));
+
+    const toutes = Object.keys(appsBrutes)
+      .filter((x) => x !== "hz")
+      .map((cle) => appsBrutes[cle])
+      .sort((a, b) => (a.name || "").localeCompare(b.name || "", "fr"));
+
+    // 27 cases : une par lettre, plus une pour tout ce qui ne commence pas
+    // par une lettre.
+    const parLettre = Array.from({ length: 27 }, () => []);
+    for (const app of toutes) {
+      const code = (app.name || "").trim().toUpperCase().charCodeAt(0);
+      parLettre[code > 64 && code < 91 ? code - 64 : 0].push(app);
     }
 
-    for (i = 0; i < arr.rcApps.length; i++) {
-      if (arr.rcApps[i].lastUsed < 0) {
-        arr.rcApps[i].lastUsed = "Ajouté récemment";
-      } else if (arr.rcApps[i].lastUsed < 10) {
-        arr.rcApps[i].lastUsed = "À l'instant";
-      } else if (arr.rcApps[i].lastUsed < 60) {
-        arr.rcApps[i].lastUsed += " min";
-      } else if (arr.rcApps[i].lastUsed < 360) {
-        arr.rcApps[i].lastUsed =
-          Math.floor(arr.rcApps[i].lastUsed / 60) + " h";
-      }
-    }
-
-    var allApps = [],
-      tmpApps = Object.keys(state.apps)
-        .filter((x) => x != "hz")
-        .map((key) => {
-          return state.apps[key];
-        });
-
-    tmpApps.sort((a, b) => (a.name > b.name ? 1 : b.name > a.name ? -1 : 0));
-
-    for (i = 0; i < 27; i++) {
-      allApps[i] = [];
-    }
-
-    for (i = 0; i < tmpApps.length; i++) {
-      var t1 = tmpApps[i].name.trim().toUpperCase().charCodeAt(0);
-      if (t1 > 64 && t1 < 91) {
-        allApps[t1 - 64].push(tmpApps[i]);
-      } else {
-        allApps[0].push(tmpApps[i]);
-      }
-    }
-
-    arr.contApps = allApps;
-    arr.allApps = tmpApps;
-    return arr;
-  });
+    return { ...menu, pnApps, rcApps, contApps: parLettre, allApps: toutes };
+  }, [menu, appsBrutes]);
 
   const [query, setQuery] = useState("");
   const [match, setMatch] = useState({});
   const [atab, setTab] = useState("Tout");
-  // const [pwctrl, setPowCtrl] = useState
 
   const dispatch = useDispatch();
   const tabSw = (e) => {
     setTab(e.target.innerText.trim());
   };
+
+  const session = useSelector((state) => state.session);
+
+  /// Fermer le menu Démarrer avant d'agir : sinon il reste ouvert par-dessus
+  /// la fenêtre qu'on vient de demander.
+  const fermerDemarrer = () => dispatch({ type: "STARTHID" });
+
+  const menuProfil = () => {
+    const roles = {
+      OWNER: "Propriétaire",
+      ADMIN: "Administrateur",
+      MEMBER: "Membre",
+    };
+    const connecte = session.status === "authenticated";
+
+    return [
+      connecte && { titre: roles[session.user.role] || "Compte" },
+      {
+        nom: "Mon compte",
+        icone: "faUser",
+        desactive: !connecte,
+        action: () => {
+          fermerDemarrer();
+          ouvrirFenetre("settings");
+        },
+      },
+      {
+        nom: "Espace de travail",
+        icone: "faBuilding",
+        desactive: !connecte,
+        action: () => {
+          fermerDemarrer();
+          ouvrirFenetre("settings");
+        },
+      },
+      { separateur: true },
+      {
+        nom: "Verrouiller",
+        icone: "faLock",
+        raccourci: "Win+L",
+        action: () => {
+          fermerDemarrer();
+          dispatch({ type: "WALLALOCK" });
+        },
+      },
+      {
+        nom: "Se déconnecter",
+        icone: "faRightFromBracket",
+        desactive: !connecte,
+        danger: true,
+        action: () => {
+          fermerDemarrer();
+          // Même séquence que « Changer de compte » sur l'écran de
+          // verrouillage : jeton, session, modules, apparence, notifications.
+          // En oublier un laisse des morceaux de l'espace précédent à
+          // l'écran après la déconnexion.
+          clearToken();
+          dispatch({ type: "SESSION_CLEAR" });
+          detachAllModules();
+          reinitialiserApparence();
+          resynchroniserNotifications();
+          dispatch({ type: "WALLALOCK" });
+        },
+      },
+    ];
+  };
+
+  const menuAlimentation = () => [
+    {
+      nom: "Verrouiller",
+      icone: "faLock",
+      action: () => {
+        fermerDemarrer();
+        dispatch({ type: "WALLALOCK" });
+      },
+    },
+    { separateur: true },
+    {
+      nom: "Redémarrer",
+      icone: "faRotateRight",
+      action: () => {
+        fermerDemarrer();
+        dispatch({ type: "WALLRESTART" });
+      },
+    },
+    {
+      nom: "Arrêter",
+      icone: "faPowerOff",
+      danger: true,
+      action: () => {
+        fermerDemarrer();
+        dispatch({ type: "WALLSHUTDN" });
+      },
+    },
+  ];
 
   const clickDispatch = (event) => {
     var action = {
@@ -103,6 +209,9 @@ export const StartMenu = () => {
   }, [query]);
 
   const userName = useSelector((state) => state.setting.person.name);
+  // La photo vient de la session, pas des réglages : elle appartient au
+  // compte et suit la personne d'un poste à l'autre.
+  const user = useSelector((state) => state.session.user);
 
   return (
     <div
@@ -169,7 +278,7 @@ export const StartMenu = () => {
                         <Icon className="pnIcon" src={app.icon} width={32} />
                         <div className="acInfo">
                           <div className="appName">{app.name}</div>
-                          <div className="timeUsed">{app.lastUsed}</div>
+                          <div className="timeUsed">{app.derniereUtilisation}</div>
                         </div>
                       </div>
                     ) : null;
@@ -257,84 +366,26 @@ export const StartMenu = () => {
             </div>
           </div>
           <div className="menuBar">
-            <div className="profile handcr">
-              <Icon src="blueProf" ui rounded width={26} />
+            {/* Le profil est enfin cliquable : il portait déjà le curseur
+                main, mais aucun geste ne lui était attaché. */}
+            <div
+              className="profile handcr"
+              onClick={(e) => menuContextuel(e, menuProfil())}
+            >
+              <Avatar user={user} nom={userName} taille={26} />
               <div className="usName">{userName}</div>
             </div>
-            <div className="relative powerMenu">
-              <div className="powerCont" data-vis={start.pwctrl}>
-                <div
-                  className="flex prtclk items-center gap-2"
-                  onClick={clickDispatch}
-                  data-action="WALLALOCK"
-                >
-                  <svg
-                    width="18"
-                    height="18"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      d="M12 2a4 4 0 0 1 4 4v2h1.75A2.25 2.25 0 0 1 20 10.25v9.5A2.25 2.25 0 0 1 17.75 22H6.25A2.25 2.25 0 0 1 4 19.75v-9.5A2.25 2.25 0 0 1 6.25 8H8V6a4 4 0 0 1 4-4Zm5.75 7.5H6.25a.75.75 0 0 0-.75.75v9.5c0 .414.336.75.75.75h11.5a.75.75 0 0 0 .75-.75v-9.5a.75.75 0 0 0-.75-.75Zm-5.75 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Zm0-10A2.5 2.5 0 0 0 9.5 6v2h5V6A2.5 2.5 0 0 0 12 3.5Z"
-                      fill="currentColor"
-                    />
-                  </svg>
-                  <span>Verrouiller</span>
-                </div>
-                <div
-                  className="flex prtclk items-center gap-2"
-                  onClick={clickDispatch}
-                  data-action="WALLSHUTDN"
-                >
-                  <svg
-                    width="18"
-                    height="18"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      d="M8.204 4.82a.75.75 0 0 1 .634 1.36A7.51 7.51 0 0 0 4.5 12.991c0 4.148 3.358 7.51 7.499 7.51s7.499-3.362 7.499-7.51a7.51 7.51 0 0 0-4.323-6.804.75.75 0 1 1 .637-1.358 9.01 9.01 0 0 1 5.186 8.162c0 4.976-4.029 9.01-9 9.01C7.029 22 3 17.966 3 12.99a9.01 9.01 0 0 1 5.204-8.17ZM12 2.496a.75.75 0 0 1 .743.648l.007.102v7.5a.75.75 0 0 1-1.493.102l-.007-.102v-7.5a.75.75 0 0 1 .75-.75Z"
-                      fill="currentColor"
-                    />
-                  </svg>
-                  <span>Arrêter</span>
-                </div>
-                <div
-                  className="flex prtclk items-center gap-2"
-                  onClick={clickDispatch}
-                  data-action="WALLRESTART"
-                >
-                  <svg
-                    width="18"
-                    height="18"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      d="M12 4.5a7.5 7.5 0 1 1-7.419 6.392c.067-.454-.265-.892-.724-.892a.749.749 0 0 0-.752.623A9 9 0 1 0 6 5.292V4.25a.75.75 0 0 0-1.5 0v3c0 .414.336.75.75.75h3a.75.75 0 0 0 0-1.5H6.9a7.473 7.473 0 0 1 5.1-2Z"
-                      fill="currentColor"
-                    />
-                  </svg>
-                  <span>Redémarrer</span>
-                </div>
-              </div>
-              <svg
-                width="20"
-                height="20"
-                fill="none"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-                onClick={clickDispatch}
-                data-action="STARTPWC"
-              >
-                <path
-                  d="M8.204 4.82a.75.75 0 0 1 .634 1.36A7.51 7.51 0 0 0 4.5 12.991c0 4.148 3.358 7.51 7.499 7.51s7.499-3.362 7.499-7.51a7.51 7.51 0 0 0-4.323-6.804.75.75 0 1 1 .637-1.358 9.01 9.01 0 0 1 5.186 8.162c0 4.976-4.029 9.01-9 9.01C7.029 22 3 17.966 3 12.99a9.01 9.01 0 0 1 5.204-8.17ZM12 2.496a.75.75 0 0 1 .743.648l.007.102v7.5a.75.75 0 0 1-1.493.102l-.007-.102v-7.5a.75.75 0 0 1 .75-.75Z"
-                  fill="currentColor"
-                />
-              </svg>
+
+            {/* L'alimentation passe par le menu commun de l'OS. C'était un
+                popover écrit à la main, avec ses propres SVG et son propre
+                état Redux (`STARTPWC`) : trois façons de faire un menu dans
+                le même produit, dont deux à maintenir pour rien. */}
+            <div
+              className="powerMenu handcr"
+              title="Marche/Arrêt"
+              onClick={(e) => menuContextuel(e, menuAlimentation())}
+            >
+              <Icon fafa="faPowerOff" width={16} />
             </div>
           </div>
         </>

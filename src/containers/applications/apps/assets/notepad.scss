@@ -1,0 +1,249 @@
+// Bloc-notes — voir notepad.jsx.
+//
+// Deux colonnes : la grille des notes à gauche, l'éditeur à droite. Les
+// notes empruntent la couleur du papier choisi ; le reste est neutre, pour
+// ne pas concurrencer cette couleur qui, elle, porte du sens.
+
+.notepad {
+  --np-line: #e3e6eb;
+  --np-muted: #6b7684;
+  --np-accent: #4338ca; // indigo, la famille documents
+
+  .npShell {
+    display: flex;
+    min-height: 0;
+  }
+
+  &.floatTab[data-size="mini"] {
+    min-width: 620px;
+    min-height: 420px;
+  }
+
+  // ---- Liste --------------------------------------------------------------
+
+  .npListe {
+    width: 236px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    border-right: 1px solid var(--np-line);
+  }
+
+  .npListeTete {
+    display: flex;
+    gap: 7px;
+    padding: 10px;
+  }
+
+  .npRecherche {
+    flex-grow: 1;
+    min-width: 0;
+    padding: 6px 10px;
+    border: 1px solid var(--np-line);
+    border-radius: 7px;
+    background: rgb(255 255 255 / 0.6);
+    font-family: inherit;
+    font-size: 0.78em;
+    box-sizing: border-box;
+
+    &:focus {
+      outline: none;
+      border-color: var(--np-accent);
+    }
+  }
+
+  .npNouveau {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    flex-shrink: 0;
+    border-radius: 7px;
+    background: var(--np-accent);
+    color: #fff;
+  }
+
+  .npNotes {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 0 10px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+  }
+
+  .npNote {
+    padding: 9px 11px;
+    border: 1px solid;
+    border-radius: 9px;
+    color: #1f2733;
+
+    &[data-actif="true"] {
+      box-shadow: 0 0 0 2px var(--np-accent);
+    }
+  }
+
+  .npNoteTitre {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8em;
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    .uicon {
+      display: flex;
+      opacity: 0.6;
+    }
+  }
+
+  .npNoteApercu {
+    margin-top: 3px;
+    font-size: 0.72em;
+    opacity: 0.7;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .npVide {
+    padding: 22px 12px;
+    text-align: center;
+    font-size: 0.76em;
+    color: var(--np-muted);
+    line-height: 1.5;
+  }
+
+  // ---- Éditeur ------------------------------------------------------------
+
+  .npEditeur {
+    flex-grow: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .npBarre {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--np-line);
+  }
+
+  .npCouleurs {
+    display: flex;
+    gap: 6px;
+  }
+
+  .npPastille {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 1px solid;
+
+    &[data-actif="true"] {
+      box-shadow: 0 0 0 2px var(--np-accent);
+    }
+  }
+
+  .npBarreFin {
+    margin-left: auto;
+    display: flex;
+    gap: 4px;
+  }
+
+  .npBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 7px;
+    color: var(--np-muted);
+
+    &:hover {
+      background: rgb(0 0 0 / 0.06);
+    }
+
+    &[data-actif="true"] {
+      color: var(--np-accent);
+    }
+  }
+
+  .npTitre {
+    padding: 12px 16px 4px;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: inherit;
+    font-family: inherit;
+    font-size: 1.05em;
+    font-weight: 600;
+  }
+
+  .npCorps {
+    flex-grow: 1;
+    resize: none;
+    padding: 8px 16px 16px;
+    border: none;
+    outline: none;
+    color: #1f2733;
+    font-family: inherit;
+    font-size: 0.86em;
+    line-height: 1.6;
+  }
+
+  .npAccueil {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 40px;
+    text-align: center;
+    color: var(--np-muted);
+
+    p {
+      max-width: 42ch;
+      font-size: 0.82em;
+      line-height: 1.6;
+      margin: 0;
+    }
+
+    .uicon {
+      display: flex;
+    }
+  }
+
+  .npAccueilBtn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: 7px;
+    background: var(--np-accent);
+    color: #fff;
+    font-size: 0.8em;
+    font-weight: 600;
+  }
+}
+
+body[data-theme="dark"] .notepad {
+  --np-line: #33383f;
+  --np-muted: #9aa2ad;
+  --np-accent: #a5b4fc;
+
+  // Le papier des notes reste clair : une note colorée sur fond sombre perd
+  // sa couleur. On garde donc le texte foncé sur les tuiles et l'éditeur,
+  // comme un vrai papier posé sur un bureau sombre.
+  .npRecherche {
+    background: rgb(255 255 255 / 0.08);
+    color: #e6e8ea;
+  }
+}

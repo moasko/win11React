@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" role="img" aria-label="Ressources humaines">
+  <path d="M13 0h22a13 13 0 0 1 13 13v22a13 13 0 0 1-13 13H4a4 4 0 0 1-4-4V13A13 13 0 0 1 13 0Z" fill="#D97706"/>
+  <rect x="11.5" y="13" width="25" height="22" rx="3" fill="#fff"/>
+  <g fill="#D97706" opacity=".45">
+    <circle cx="19.5" cy="21.5" r="3.4"/>
+    <path d="M19.5 26c3 0 5 1.9 5 4.4V31h-10v-.6c0-2.5 2-4.4 5-4.4Z"/>
+    <rect x="27" y="19.5" width="7.5" height="2.4" rx="1.2"/>
+    <rect x="27" y="24" width="7.5" height="2.4" rx="1.2"/>
+    <rect x="27" y="28.5" width="5" height="2.4" rx="1.2"/>
+  </g>
+</svg>

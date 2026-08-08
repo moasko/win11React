@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1200" preserveAspectRatio="xMidYMid slice" width="1920" height="1200">
+  <defs>
+    <linearGradient id="clFond" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#F5F8FF"/>
+      <stop offset="1" stop-color="#D7E3FB"/>
+    </linearGradient>
+    <linearGradient id="clA" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2563EB" stop-opacity=".30"/>
+      <stop offset="1" stop-color="#4F46E5" stop-opacity=".10"/>
+    </linearGradient>
+    <linearGradient id="clB" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="#0EA5E9" stop-opacity=".20"/>
+      <stop offset="1" stop-color="#2563EB" stop-opacity=".04"/>
+    </linearGradient>
+    <radialGradient id="clHalo" cx=".72" cy=".28" r=".62">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity=".85"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+    <path id="clTuile" d="M13 0h22a13 13 0 0 1 13 13v22a13 13 0 0 1-13 13H4a4 4 0 0 1-4-4V13A13 13 0 0 1 13 0Z"/>
+  </defs>
+  <rect width="1920" height="1200" fill="url(#clFond)"/>
+  <use href="#clTuile" fill="url(#clA)" transform="translate(1180 130) rotate(14) scale(15)"/>
+  <use href="#clTuile" fill="url(#clB)" transform="translate(1015 470) rotate(-8) scale(9.5)"/>
+  <use href="#clTuile" fill="url(#clB)" transform="translate(1560 700) rotate(22) scale(6)"/>
+  <rect width="1920" height="1200" fill="url(#clHalo)"/>
+</svg>

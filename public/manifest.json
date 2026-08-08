@@ -1,7 +1,14 @@
 {
-  "short_name": "Win11",
-  "name": "Win11 in React",
+  "short_name": "CompanyOS",
+  "name": "CompanyOS",
+  "description": "Le système d'exploitation web qui réunit toutes les applications de gestion de l'entreprise",
   "icons": [
+    {
+      "src": "img/asset/logo.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "any"
+    },
     {
       "src": "favicon.ico",
       "sizes": "64x64 32x32 24x24 16x16",
@@ -15,6 +22,6 @@
   ],
   "start_url": ".",
   "display": "standalone",
-  "theme_color": "#000000",
-  "background_color": "#ffffff"
+  "theme_color": "#0f1115",
+  "background_color": "#010001"
 }

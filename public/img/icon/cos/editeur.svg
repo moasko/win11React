@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" role="img" aria-label="Traitement de texte">
+  <path d="M13 0h22a13 13 0 0 1 13 13v22a13 13 0 0 1-13 13H4a4 4 0 0 1-4-4V13A13 13 0 0 1 13 0Z" fill="#4F46E5"/>
+  <path d="M15 14a2 2 0 0 1 2-2h9l8 8v15a2 2 0 0 1-2 2H17a2 2 0 0 1-2-2Z" fill="#fff"/>
+  <path d="M26 12l8 8h-6a2 2 0 0 1-2-2Z" fill="#4F46E5" opacity=".35"/>
+  <g stroke="#4F46E5" stroke-width="2.2" stroke-linecap="round" opacity=".45">
+    <path d="M19 25h10M19 30h7"/>
+  </g>
+</svg>

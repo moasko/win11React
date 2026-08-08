@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { Icon } from "../utils/general";
 import { api } from "../api/client";
 import { subscribeSavePicker, closeSavePicker } from "./saveRequest";
+import { modal } from "./modalRequest";
+import { iconeDeFichier } from "./iconesFichiers";
 import "./savepicker.scss";
 
 /// Boîte « Enregistrer sous » : montre le cloud de l'espace de travail
@@ -65,8 +67,13 @@ export const SavePicker = () => {
   const clash = files.some((f) => f.name === name.trim());
 
   const createFolder = async () => {
-    const folderName = window.prompt("Nom du nouveau dossier :");
-    if (!folderName || !folderName.trim()) return;
+    const folderName = await modal.prompt({
+      title: "Nouveau dossier",
+      label: "Nom du dossier",
+      placeholder: "Sans titre",
+      confirmLabel: "Créer",
+    });
+    if (!folderName) return;
     try {
       const created = await api.createFolder(folderName.trim(), current.id);
       setPath([...path, { id: created.id, name: created.name }]);
@@ -128,7 +135,7 @@ export const SavePicker = () => {
                   className="spRow spFile handcr"
                   onClick={() => setName(f.name)}
                 >
-                  <Icon src="win/docs" width={18} />
+                  <Icon src={iconeDeFichier(f)} width={18} />
                   <span className="spName">{f.name}</span>
                 </div>
               ))}

@@ -54,7 +54,13 @@ export class Bin {
       curr = curr.host;
     }
 
-    return cpath.count("\\") > 1 ? cpath.strip("\\") : cpath;
+    // Volontairement sans dépendance : ces deux opérations passaient par
+    // `String.prototype.count` et `.strip`, greffés par `utils/general.jsx`.
+    // Ce fichier est évalué au chargement du store, avant que quoi que ce
+    // soit ne charge `general.jsx` : le jour où l'ordre des imports change,
+    // tout l'OS refuse de démarrer sur un « count is not a function ».
+    const barres = cpath.split("\\").length - 1;
+    return barres > 1 ? cpath.replace(/^\\+|\\+$/g, "") : cpath;
   }
 
   parsePath(cpath) {

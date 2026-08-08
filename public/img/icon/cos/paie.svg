@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" role="img" aria-label="Paie">
+  <path d="M13 0h22a13 13 0 0 1 13 13v22a13 13 0 0 1-13 13H4a4 4 0 0 1-4-4V13A13 13 0 0 1 13 0Z" fill="#D97706"/>
+  <rect x="12" y="11" width="17" height="26" rx="2.5" fill="#fff"/>
+  <g stroke="#D97706" stroke-width="2.2" stroke-linecap="round" opacity=".45">
+    <path d="M15.5 16.5h10M15.5 21h10M15.5 25.5h6"/>
+  </g>
+  <g fill="#fff">
+    <ellipse cx="31.5" cy="24.5" rx="6.5" ry="2.6"/>
+    <path d="M25 24.5v9c0 1.4 2.9 2.6 6.5 2.6s6.5-1.2 6.5-2.6v-9c0 1.4-2.9 2.6-6.5 2.6S25 25.9 25 24.5Z"/>
+  </g>
+  <g stroke="#D97706" stroke-width="1.6" opacity=".3" fill="none">
+    <path d="M25 29c0 1.4 2.9 2.6 6.5 2.6s6.5-1.2 6.5-2.6"/>
+  </g>
+</svg>

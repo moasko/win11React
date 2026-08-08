@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "installations" ADD COLUMN     "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ADD COLUMN     "version" TEXT;

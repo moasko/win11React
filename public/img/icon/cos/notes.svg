@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" role="img" aria-label="Notes">
+  <path d="M13 0h22a13 13 0 0 1 13 13v22a13 13 0 0 1-13 13H4a4 4 0 0 1-4-4V13A13 13 0 0 1 13 0Z" fill="#6366F1"/>
+  <path d="M14 15a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v13l-7 7H16a2 2 0 0 1-2-2Z" fill="#fff"/>
+  <path d="M34 28l-7 7v-5a2 2 0 0 1 2-2Z" fill="#fff" opacity=".55"/>
+  <g stroke="#6366F1" stroke-width="2.2" stroke-linecap="round" opacity=".45">
+    <path d="M18.5 20h11M18.5 25.5h8"/>
+  </g>
+</svg>

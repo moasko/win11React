@@ -1,4 +1,4 @@
-// Boutique — même charte que les modules métier.
+﻿// Boutique — même charte que les modules métier.
 
 .boutique {
   --btq-bg: #ffffff;
@@ -14,12 +14,19 @@
   --btq-amber: #b06000;
   --btq-red: #d93025;
 
-  width: 82%;
-  height: 82%;
-  top: 7%;
-  left: 9%;
+  // Avant les règles imbriquées : Sass avertit que l'ordre d'émission des
+  // déclarations qui les suivent change dans une version à venir.
   background: var(--btq-bg);
   color: var(--btq-text);
+
+  &.floatTab[data-size="mini"] {
+    width: 72%;
+    height: 74%;
+    top: 11%;
+    left: 14%;
+    min-width: 700px;
+    min-height: 460px;
+  }
 
   .btqLocked {
     display: flex;
@@ -81,13 +88,12 @@
   }
 
   .btqSection {
-    padding-bottom: 22px;
-    margin-bottom: 20px;
-    border-bottom: 1px solid var(--btq-line);
+    padding-bottom: 4px;
+    margin-bottom: 18px;
 
-    &:last-child {
-      border-bottom: none;
-      margin-bottom: 0;
+    // Onglet inactif : le panneau n'existe pas à l'écran.
+    &[data-hidden="true"] {
+      display: none;
     }
 
     h2 {
@@ -485,5 +491,187 @@ body[data-theme="dark"] .boutique {
 
   .btqPrimary:hover {
     background: #5f7cf0;
+  }
+}
+
+// Accès demandés par une application, affichés avant l'installation.
+.btqAcces {
+  width: 100%;
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--btq-line, #e3e6eb);
+  background: var(--btq-panel, #f8f9fb);
+  text-align: left;
+
+  &[data-neutre="true"] {
+    opacity: 0.75;
+  }
+}
+
+.btqAccesTitre {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.7em;
+  font-weight: 600;
+  margin-bottom: 6px;
+
+  .uicon {
+    display: flex;
+  }
+}
+
+.btqAccesLigne {
+  font-size: 0.68em;
+  line-height: 1.5;
+  opacity: 0.85;
+
+  b {
+    font-weight: 600;
+  }
+}
+
+// Module annoncé mais pas encore livré : la fiche reste consultable — la
+// feuille de route intéresse le client — mais rien ne laisse croire qu'on
+// peut l'installer.
+.btqCard[data-bientot="true"] {
+  opacity: 0.62;
+
+  &:hover,
+  &[data-active="true"] {
+    opacity: 1;
+  }
+}
+
+.btqBientot {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  width: 100%;
+  margin-top: 12px;
+  padding: 11px 13px;
+  border-radius: 8px;
+  border: 1px dashed var(--btq-line);
+  background: var(--btq-panel);
+  text-align: left;
+
+  .uicon {
+    display: flex;
+    flex-shrink: 0;
+    margin-top: 1px;
+    color: var(--btq-amber);
+  }
+
+  div {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  b {
+    font-size: 0.74em;
+    font-weight: 600;
+  }
+
+  span {
+    font-size: 0.68em;
+    line-height: 1.5;
+    color: var(--btq-muted);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Mises à jour
+// ---------------------------------------------------------------------------
+
+.boutique {
+  .btqPastille {
+    margin-left: auto;
+    min-width: 18px;
+    padding: 1px 6px;
+    border-radius: 100px;
+    background: var(--btq-accent);
+    color: #fff;
+    font-size: 0.82em;
+    font-weight: 600;
+    text-align: center;
+  }
+
+  .btqMajTete {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 14px;
+    border: 1px solid var(--btq-line);
+    border-radius: 8px;
+    background: var(--btq-panel);
+    font-size: 0.78em;
+    margin-bottom: 12px;
+  }
+
+  .btqMaj {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 14px 16px;
+    border: 1px solid var(--btq-line);
+    border-radius: 9px;
+    background: var(--btq-card);
+    margin-bottom: 10px;
+  }
+
+  .btqMajInfo {
+    flex-grow: 1;
+    min-width: 0;
+  }
+
+  .btqMajNom {
+    font-size: 0.86em;
+    font-weight: 600;
+  }
+
+  .btqMajVersions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.72em;
+    color: var(--btq-muted);
+    margin-top: 2px;
+
+    strong {
+      color: var(--btq-accent);
+    }
+
+    .uicon {
+      display: flex;
+    }
+  }
+
+  // Les nouveautés se lisent avant de cliquer : c'est ce qui permet de
+  // décider, et de comprendre après coup ce qui a changé.
+  .btqMajNotes {
+    margin: 8px 0 0;
+    padding-left: 16px;
+    font-size: 0.74em;
+    line-height: 1.5;
+    color: var(--btq-muted);
+
+    li {
+      list-style: disc;
+      margin-bottom: 2px;
+    }
+  }
+
+  .btqMajVide {
+    font-size: 0.74em;
+    color: var(--btq-muted);
+    margin-top: 6px;
+  }
+
+  .btqMajDispo {
+    font-style: normal;
+    color: var(--btq-accent);
   }
 }

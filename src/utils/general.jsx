@@ -7,27 +7,14 @@ import { LazyLoadImage } from "react-lazy-load-image-component";
 import * as FaIcons from "@fortawesome/free-solid-svg-icons";
 import * as FaRegIcons from "@fortawesome/free-regular-svg-icons";
 import * as AllIcons from "./icons";
-
-String.prototype.strip = function (c) {
-  var i = 0,
-    j = this.length - 1;
-  while (this[i] === c) i++;
-  while (this[j] === c) j--;
-  return this.slice(i, j + 1);
-};
-
-String.prototype.count = function (c) {
-  var result = 0,
-    i = 0;
-  for (i; i < this.length; i++) if (this[i] == c) result++;
-  return result;
-};
+import { cheminIcone } from "./iconesCos";
+import { GlypheUi, aUnGlypheUi } from "./iconesUi";
 
 export const Icon = (props) => {
   const sidepane = useSelector((state) => state.sidepane);
 
   const dispatch = useDispatch();
-  var src = `img/icon/${props.ui != null ? "ui/" : ""}${props.src}.png`;
+  var src = cheminIcone(props.src, props.ui != null);
   if (props.ext != null || (props.src && props.src.includes("http"))) {
     src = props.src;
   }
@@ -112,7 +99,11 @@ export const Icon = (props) => {
         data-menu={props.menu}
         data-pr={props.pr}
       >
-        {props.className == "tsIcon" ? (
+        {/* Sans `src`, l'icône n'est qu'une zone cliquable habillée par la
+            CSS — le coin « Afficher le bureau » de la barre des tâches, par
+            exemple. Rendre une image dans ce cas réclamait `ui/undefined.png`
+            au serveur à chaque chargement. */}
+        {props.src == null ? null : props.className == "tsIcon" ? (
           <div
             onClick={props.click != null ? clickDispatch : null}
             style={{ width: props.width, height: props.width }}
@@ -139,6 +130,24 @@ export const Icon = (props) => {
               alt=""
             />
           </div>
+        ) : props.ui != null && aUnGlypheUi(props.src) ? (
+          // Pictogramme système vectoriel : le trait suit `currentColor`, donc
+          // pas de `data-invert` ici — c'est précisément ce dont il affranchit.
+          <div
+            onClick={props.click != null ? clickDispatch : null}
+            data-action={props.click}
+            data-payload={props.payload}
+            data-click={props.click != null}
+            data-flip={props.flip != null}
+            data-rounded={props.rounded != null ? "true" : "false"}
+            style={{ margin: props.margin || null, display: "grid" }}
+          >
+            <GlypheUi
+              nom={props.src}
+              width={props.width || 16}
+              height={props.height || props.width || 16}
+            />
+          </div>
         ) : (
           <img
             width={props.width}
@@ -153,6 +162,11 @@ export const Icon = (props) => {
             src={src}
             style={{
               margin: props.margin || null,
+              // La taille en style inline plutôt qu'en attribut : elle prime
+              // ainsi sur les feuilles de style, et un réglage de taille
+              // d'icône produit réellement l'effet demandé.
+              width: props.width || null,
+              height: props.height || props.width || null,
             }}
             alt=""
           />

@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1200" preserveAspectRatio="xMidYMid slice" width="1920" height="1200">
+  <defs>
+    <linearGradient id="lkFond" x1="0" y1="0" x2=".85" y2="1">
+      <stop offset="0" stop-color="#070B14"/>
+      <stop offset=".6" stop-color="#0F1B31"/>
+      <stop offset="1" stop-color="#1B2A4A"/>
+    </linearGradient>
+    <radialGradient id="lkGlow" cx=".78" cy=".22" r=".6">
+      <stop offset="0" stop-color="#2563EB" stop-opacity=".34"/>
+      <stop offset="1" stop-color="#2563EB" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="lkVoile" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#000000" stop-opacity=".42"/>
+      <stop offset=".45" stop-color="#000000" stop-opacity=".08"/>
+      <stop offset="1" stop-color="#000000" stop-opacity=".38"/>
+    </linearGradient>
+    <linearGradient id="lkTint" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#60A5FA" stop-opacity=".20"/>
+      <stop offset="1" stop-color="#60A5FA" stop-opacity=".02"/>
+    </linearGradient>
+    <path id="lkTuile" d="M13 0h22a13 13 0 0 1 13 13v22a13 13 0 0 1-13 13H4a4 4 0 0 1-4-4V13A13 13 0 0 1 13 0Z"/>
+  </defs>
+  <rect width="1920" height="1200" fill="url(#lkFond)"/>
+  <rect width="1920" height="1200" fill="url(#lkGlow)"/>
+  <use href="#lkTuile" fill="url(#lkTint)" transform="translate(1290 210) rotate(16) scale(13)"/>
+  <use href="#lkTuile" fill="url(#lkTint)" transform="translate(1120 620) rotate(-12) scale(7)"/>
+  <rect width="1920" height="1200" fill="url(#lkVoile)"/>
+</svg>

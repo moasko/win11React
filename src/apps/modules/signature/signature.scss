@@ -1,0 +1,371 @@
+// Signature — voir index.jsx.
+//
+// Trois vues sous une barre d'onglets : le pad de dessin, la bibliothèque
+// en grille, la pose sur document. Les cartes portent un cadre plein —
+// jamais de bordure latérale seule.
+
+.sigApp {
+  --sg-bg: #ffffff;
+  --sg-panel: #f7f8fa;
+  --sg-line: #e3e6eb;
+  --sg-text: #1f2733;
+  --sg-muted: #6b7684;
+  --sg-accent: #7c3aed; // violet : l'acte personnel, le paraphe
+  --sg-accent-soft: #f1eafd;
+
+  background: var(--sg-bg);
+  color: var(--sg-text);
+
+  &.floatTab[data-size="mini"] {
+    width: 78%;
+    height: 82%;
+    top: 8%;
+    left: 11%;
+    min-width: 860px;
+    min-height: 540px;
+  }
+
+  .sigVerrou {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-grow: 1;
+    font-size: 0.84em;
+    color: var(--sg-muted);
+  }
+
+  .sigShell {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    min-height: 0;
+  }
+
+  // ---- Onglets ------------------------------------------------------------
+
+  .sigNav {
+    display: flex;
+    gap: 4px;
+    padding: 10px 14px 0;
+    border-bottom: 1px solid var(--sg-line);
+  }
+
+  .sigOnglet {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 13px;
+    border-radius: 8px 8px 0 0;
+    font-size: 0.8em;
+    color: var(--sg-muted);
+
+    .uicon {
+      display: flex;
+    }
+
+    &:hover {
+      background: color-mix(in srgb, var(--sg-text) 5%, transparent);
+    }
+
+    &[data-actif="true"] {
+      color: var(--sg-accent);
+      font-weight: 600;
+      box-shadow: inset 0 -2px 0 var(--sg-accent);
+    }
+  }
+
+  .sigCentre {
+    flex-grow: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  // ---- Pad ----------------------------------------------------------------
+
+  .sigDessin {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    min-height: 0;
+    padding: 16px 20px;
+    gap: 12px;
+  }
+
+  .sigOutils {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .sigEpaisseur {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.76em;
+    color: var(--sg-muted);
+
+    input {
+      accent-color: var(--sg-accent);
+    }
+  }
+
+  .sigPad {
+    position: relative;
+    flex-grow: 1;
+    min-height: 220px;
+    border: 1px dashed color-mix(in srgb, var(--sg-muted) 45%, transparent);
+    border-radius: 12px;
+    // Toujours papier, thème sombre compris : on signe à l'encre noire ou
+    // bleue, elle doit se voir comme sur la feuille.
+    background: #fbfbf9;
+    touch-action: none;
+    cursor: crosshair;
+    overflow: hidden;
+  }
+
+  .sigTraits {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  .sigConsigne {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.82em;
+    color: color-mix(in srgb, var(--sg-muted) 70%, transparent);
+    pointer-events: none;
+  }
+
+  // La ligne de signature, comme sur le papier : un repère, pas une limite.
+  .sigLigne {
+    position: absolute;
+    left: 8%;
+    right: 8%;
+    bottom: 18%;
+    border-bottom: 1px solid color-mix(in srgb, var(--sg-muted) 30%, transparent);
+    pointer-events: none;
+  }
+
+  .sigActions {
+    display: flex;
+    gap: 9px;
+    justify-content: flex-end;
+  }
+
+  // ---- Bibliothèque -------------------------------------------------------
+
+  .sigBiblio {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 18px 20px;
+  }
+
+  .sigGrille {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+    gap: 14px;
+  }
+
+  .sigCarte {
+    border: 1px solid var(--sg-line);
+    border-radius: 11px;
+    background: var(--sg-bg);
+    overflow: hidden;
+  }
+
+  .sigApercu {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 110px;
+    padding: 12px;
+    // Papier dans les deux thèmes, comme le pad : l'encre doit se voir.
+    background: #fbfbf9;
+
+    img {
+      max-width: 100%;
+      max-height: 100%;
+    }
+  }
+
+  .sigCarteBas {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 9px 12px;
+    border-top: 1px solid var(--sg-line);
+  }
+
+  .sigCarteNom {
+    font-size: 0.78em;
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .sigCarteActions {
+    display: flex;
+    gap: 4px;
+
+    span {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 26px;
+      height: 26px;
+      border-radius: 7px;
+      color: var(--sg-muted);
+      cursor: pointer;
+
+      &:hover {
+        background: var(--sg-accent-soft);
+        color: var(--sg-accent);
+      }
+    }
+  }
+
+  // ---- Choix du document --------------------------------------------------
+
+  .sigDocs {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 18px 20px;
+  }
+
+  .sigAide {
+    margin: 0 0 14px;
+    font-size: 0.78em;
+    line-height: 1.5;
+    color: var(--sg-muted);
+    max-width: 62ch;
+  }
+
+  .sigListeDocs {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .sigDoc {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 13px;
+    border: 1px solid var(--sg-line);
+    border-radius: 9px;
+
+    .uicon {
+      display: flex;
+      color: #c0392b;
+    }
+
+    &:hover {
+      border-color: var(--sg-accent);
+      background: var(--sg-accent-soft);
+    }
+
+    &[data-off="true"] {
+      opacity: 0.6;
+      pointer-events: none;
+    }
+  }
+
+  .sigDocNom {
+    font-size: 0.8em;
+    font-weight: 600;
+  }
+
+  .sigDocChemin {
+    font-size: 0.68em;
+    color: var(--sg-muted);
+  }
+
+  // ---- Pose sur document --------------------------------------------------
+
+  .sigSigner {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    min-height: 0;
+  }
+
+  .sigSignerBarre {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--sg-line);
+    background: var(--sg-panel);
+
+    select {
+      padding: 6px 9px;
+      border: 1px solid var(--sg-line);
+      border-radius: 7px;
+      background: var(--sg-bg);
+      color: var(--sg-text);
+      font-family: inherit;
+      font-size: 0.76em;
+    }
+  }
+
+  .sigSignerEtat {
+    flex-grow: 1;
+    font-size: 0.72em;
+    color: var(--sg-muted);
+    text-align: right;
+  }
+
+  .sigPages {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    background: color-mix(in srgb, var(--sg-muted) 10%, var(--sg-panel));
+  }
+
+  .sigPage {
+    position: relative;
+    box-shadow: 0 2px 9px rgba(0, 0, 0, 0.18);
+    cursor: copy;
+    line-height: 0;
+  }
+
+  .sigPosee {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    cursor: grab;
+    // La signature posée se voit : un halo au survol suffit, pas de cadre
+    // en dur qui polluerait l'aperçu du document.
+    &:hover {
+      outline: 2px dashed var(--sg-accent);
+      outline-offset: 3px;
+    }
+
+    &:active {
+      cursor: grabbing;
+    }
+  }
+}
+
+body[data-theme="dark"] .sigApp {
+  --sg-bg: #1f2226;
+  --sg-panel: #17191d;
+  --sg-line: #33383f;
+  --sg-text: #e6e8ea;
+  --sg-muted: #9aa2ad;
+  --sg-accent: #a78bfa;
+  --sg-accent-soft: #2c2440;
+}

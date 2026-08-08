@@ -5,18 +5,56 @@
   background: initial;
 }
 
+/* Les champs se comptent bordure comprise.
+ *
+ * `@tailwind base` n'est pas chargé — volontairement : son preflight
+ * remettrait à plat titres, listes et boutons de tout l'OS. Mais c'est lui
+ * qui pose d'ordinaire `box-sizing: border-box`, si bien qu'un champ en
+ * `width: 100%` mesurait en réalité 100 % PLUS son rembourrage et sa
+ * bordure : deux champs côte à côte dans une grille se chevauchaient de
+ * 10 px, dans tous les modules.
+ *
+ * On corrige donc au seul endroit qui pose problème : les contrôles de
+ * formulaire. Le reste de la mise en page garde le modèle de boîte qu'il
+ * a toujours eu, et rien d'existant ne bouge. */
+input,
+select,
+textarea,
+button {
+  box-sizing: border-box;
+}
+
+:root {
+  /* Police de l'interface. Redéfinie par les Paramètres > Apparence,
+     éventuellement avec une police importée par l'utilisateur. */
+  --ui-font: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
+    "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
+    sans-serif;
+}
+
 body {
   margin: 0;
   padding: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
-    "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
-    sans-serif;
+  font-family: var(--ui-font);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   width: 100vw;
   height: 100vh;
   user-select: none;
   overflow: hidden !important;
+}
+
+/* `user-select: none` sur body donne le comportement d'un bureau : on ne
+   sélectionne pas les libellés d'icônes en glissant la souris. Mais c'est
+   hérité, et une zone de saisie doit rester sélectionnable — sans quoi on ne
+   peut plus ni sélectionner un mot pour le mettre en gras, ni double-cliquer
+   dans un champ. */
+input,
+textarea,
+[contenteditable="true"],
+[contenteditable="true"] * {
+  user-select: text;
+  -webkit-user-select: text;
 }
 
 body:before {
@@ -157,9 +195,11 @@ i[data-flip="true"] {
   box-shadow: 0 1px 1px rgba(0, 0, 0, 0.25);
 }
 
-input {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
-    "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue";
+input,
+select,
+textarea,
+button {
+  font-family: var(--ui-font);
 }
 
 .prtclk * {

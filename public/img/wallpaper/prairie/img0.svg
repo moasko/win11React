@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1200" preserveAspectRatio="xMidYMid slice" width="1920" height="1200">
+  <defs>
+    <linearGradient id="prFond" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#F3FBF6"/>
+      <stop offset="1" stop-color="#CFEEDF"/>
+    </linearGradient>
+    <linearGradient id="prA" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#059669" stop-opacity=".28"/>
+      <stop offset="1" stop-color="#0D9488" stop-opacity=".08"/>
+    </linearGradient>
+    <linearGradient id="prB" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="#14B8A6" stop-opacity=".20"/>
+      <stop offset="1" stop-color="#047857" stop-opacity=".03"/>
+    </linearGradient>
+    <radialGradient id="prHalo" cx=".28" cy=".24" r=".6">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity=".8"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+    <path id="prTuile" d="M13 0h22a13 13 0 0 1 13 13v22a13 13 0 0 1-13 13H4a4 4 0 0 1-4-4V13A13 13 0 0 1 13 0Z"/>
+  </defs>
+  <rect width="1920" height="1200" fill="url(#prFond)"/>
+  <use href="#prTuile" fill="url(#prA)" transform="translate(1230 240) rotate(-12) scale(14)"/>
+  <use href="#prTuile" fill="url(#prB)" transform="translate(1020 560) rotate(16) scale(8)"/>
+  <use href="#prTuile" fill="url(#prB)" transform="translate(1620 130) rotate(8) scale(5)"/>
+  <rect width="1920" height="1200" fill="url(#prHalo)"/>
+</svg>

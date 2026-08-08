@@ -60,6 +60,10 @@ const apps = [
     type: "app",
     action: "WNSTORE",
   },
+  // Les applications système (Photos, Musique, Vidéo, Presse-papiers) ne
+  // figurent volontairement pas ici : elles se déclarent dans leur propre
+  // dossier avec `systeme: true`, et le shell les monte au démarrage.
+  // Le menu Démarrer les liste car il lit l'état du shell, pas ce fichier.
   {
     name: "Corbeille",
     icon: "bin0",

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" role="img" aria-label="Presse-papiers">
+  <path d="M13 0h22a13 13 0 0 1 13 13v22a13 13 0 0 1-13 13H4a4 4 0 0 1-4-4V13A13 13 0 0 1 13 0Z" fill="#64748B"/>
+  <rect x="20" y="18" width="16" height="19" rx="3" fill="#fff" opacity=".5"/>
+  <rect x="12" y="12" width="16" height="19" rx="3" fill="#fff"/>
+  <rect x="16.5" y="9.5" width="7" height="5" rx="2.5" fill="#64748B"/>
+</svg>

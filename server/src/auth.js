@@ -42,3 +42,27 @@ export const authenticate = async (request, reply) => {
   request.user = user;
   request.tenantId = user.tenantId;
 };
+
+/// Hiérarchie des rôles. Un rang plus élevé peut tout ce que peut le rang
+/// en dessous : inutile d'énumérer les combinaisons.
+const RANG = { MEMBER: 1, ADMIN: 2, OWNER: 3 };
+
+export const auMoins = (role, minimum) => RANG[role] >= RANG[minimum];
+
+/// Préhandler exigeant un rôle minimum. À placer **après** `authenticate` :
+///
+///   app.post("/…", { preHandler: [authenticate, exigerRole("ADMIN")] }, …)
+///
+/// Le contrôle vit ici et pas dans l'interface : cacher un bouton n'est pas
+/// une autorisation, c'est une politesse. Toute règle qui compte doit tenir
+/// même quand la requête arrive sans passer par notre écran.
+export const exigerRole = (minimum) => async (request, reply) => {
+  if (!auMoins(request.user?.role, minimum)) {
+    return reply.code(403).send({
+      error:
+        minimum === "OWNER"
+          ? "Seul le propriétaire de l'espace peut faire cela."
+          : "Vous devez être administrateur de l'espace pour faire cela.",
+    });
+  }
+};

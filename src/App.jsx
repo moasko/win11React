@@ -1,11 +1,10 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { useDispatch, useSelector } from "react-redux";
 import "./i18nextConf";
 import "./index.css";
 import "./utils/scroll.scss";
 
-import ActMenu from "./components/menu";
 import {
   BandPane,
   CalnWid,
@@ -19,10 +18,47 @@ import { Background, BootScreen, LockScreen } from "./containers/background";
 import { loadSettings } from "./actions";
 import * as Applications from "./containers/applications";
 import * as Drafts from "./containers/applications/draft";
-import { modules } from "./apps/registry";
+import { modulesTous } from "./apps/registry";
 import { SavePicker } from "./apps/SavePicker";
-import { syncInstalledModules, detachAllModules } from "./apps/sync";
+import { ModalHost } from "./apps/ModalHost";
+import { HoteSelecteurProduit } from "./apps/SelecteurProduit";
+import { HoteSelecteurClient } from "./apps/SelecteurClient";
+import { HoteMenuContextuel } from "./apps/MenuContextuel";
+import { ecouterLesCopies } from "./apps/clipboard";
+import { demarrerSyncNotifications } from "./apps/notifications";
+import { CustomApp } from "./apps/CustomApp";
+import {
+  syncInstalledModules,
+  detachAllModules,
+  attachSystemModules,
+} from "./apps/sync";
+import { appliquerApparence, reinitialiserApparence } from "./apps/appearance";
 import { api, getToken, clearToken } from "./api/client";
+
+/// Monte une application à sa première ouverture, et pas avant.
+///
+/// Toutes les fenêtres étaient rendues dès le démarrage, simplement
+/// masquées : les effets de *tous* les modules tournaient donc en
+/// permanence — chargements réseau compris — y compris pour les
+/// applications qu'on n'ouvre jamais de la journée. À six modules ça ne se
+/// voyait pas ; à quarante, si.
+///
+/// Une fois ouverte, l'application reste montée : fermer une fenêtre ne
+/// doit pas jeter ce qu'elle contient, un document à moitié rédigé ou un
+/// formulaire rempli. On économise le démarrage, pas la mémoire.
+function AppMontee({ mod }) {
+  const cle = mod.id || mod.icon;
+  const cachee = useSelector((state) => state.apps[cle]?.hide !== false);
+  const [montee, setMontee] = useState(false);
+
+  useEffect(() => {
+    if (!cachee) setMontee(true);
+  }, [cachee]);
+
+  if (!montee) return null;
+  const Fenetre = mod.Window;
+  return <Fenetre />;
+}
 
 function ErrorFallback({ error, resetErrorBoundary }) {
   return (
@@ -47,6 +83,7 @@ function App() {
   const apps = useSelector((state) => state.apps);
   const wall = useSelector((state) => state.wallpaper);
   const session = useSelector((state) => state.session);
+  const customApps = useSelector((state) => state.customApps);
   const dispatch = useDispatch();
 
   const afterMath = (event) => {
@@ -76,27 +113,44 @@ function App() {
     });
   };
 
+  // Clic droit : on referme ce qui est ouvert (menu Démarrer, volets), et
+  // on supprime le menu natif du navigateur. Le menu contextuel de l'OS,
+  // lui, est construit par l'écran qui reçoit le clic — voir
+  // `src/apps/menuRequest.js`. Rien de global n'a besoin de savoir sur quoi
+  // on a cliqué, ce qui était toute la faiblesse de l'ancien système.
   window.oncontextmenu = (e) => {
     afterMath(e);
     e.preventDefault();
-    // dispatch({ type: 'GARBAGE'});
-    var data = {
-      top: e.clientY,
-      left: e.clientX,
-    };
-
-    if (e.target.dataset.menu != null) {
-      data.menu = e.target.dataset.menu;
-      data.attr = e.target.attributes;
-      data.dataset = e.target.dataset;
-      dispatch({
-        type: "MENUSHOW",
-        payload: data,
-      });
-    }
   };
 
   window.onclick = afterMath;
+
+  // Historique du presse-papiers : on écoute les copies faites partout dans
+  // l'OS. L'historique reste local au navigateur — voir src/apps/clipboard.js.
+  useEffect(() => ecouterLesCopies(), []);
+
+  // Notifications de l'espace de travail. La synchronisation démarre une
+  // fois pour toutes : sans session elle ne fait rien, et la connexion la
+  // relance d'elle-même — voir src/apps/notifications.js.
+  useEffect(() => demarrerSyncNotifications(), []);
+
+  // Garde-fou du glisser-déposer.
+  //
+  // Sans cela, lâcher un fichier ailleurs que sur une zone de dépôt fait ce
+  // que fait un navigateur par défaut : il ouvre le fichier, donc il quitte
+  // CompanyOS. Déposer une vidéo à côté de l'Explorateur remplaçait l'OS
+  // par la vidéo. On neutralise le comportement natif au niveau de la
+  // fenêtre ; les zones de dépôt réelles ont déjà traité l'événement quand
+  // il arrive ici, leur fonctionnement n'est pas touché.
+  useEffect(() => {
+    const bloquer = (e) => e.preventDefault();
+    window.addEventListener("dragover", bloquer);
+    window.addEventListener("drop", bloquer);
+    return () => {
+      window.removeEventListener("dragover", bloquer);
+      window.removeEventListener("drop", bloquer);
+    };
+  }, []);
 
   window.onload = (e) => {
     dispatch({ type: "WALLBOOTED" });
@@ -104,6 +158,12 @@ function App() {
 
   // Restauration de session : un jeton valide en localStorage remet
   // l'espace de travail et ses modules en place, écran verrouillé ou non.
+  // Les applications système existent avant toute session : elles font
+  // partie du socle, pas du catalogue d'un espace de travail.
+  useEffect(() => {
+    attachSystemModules();
+  }, []);
+
   useEffect(() => {
     const boot = async () => {
       if (!getToken()) {
@@ -118,12 +178,14 @@ function App() {
           payload: { path: "person.name", value: me.user.name },
         });
         await syncInstalledModules();
+        await appliquerApparence(me.tenant.id);
       } catch (err) {
         // API injoignable : on garde le jeton, la session repartira au
         // prochain chargement. Seul un 401 signifie un jeton mort.
         if (err.status === 401) clearToken();
         dispatch({ type: "SESSION_CLEAR" });
         detachAllModules();
+        reinitialiserApparence();
       }
     };
     boot();
@@ -153,18 +215,23 @@ function App() {
         {wall.locked ? <LockScreen dir={wall.dir} /> : null}
         <div className="appwrap">
           <Background />
-          <div className="desktop" data-menu="desk">
+          <div className="desktop">
             <DesktopApp />
             {Object.keys(Applications).map((key, idx) => {
               var WinApp = Applications[key];
               return <WinApp key={idx} />;
             })}
-            {/* Modules métier : ModuleWindow ne rend rien tant que le
-                module n'est pas installé dans l'espace de travail. */}
-            {modules.map((mod) => {
-              const ModWindow = mod.Window;
-              return <ModWindow key={mod.slug} />;
-            })}
+            {/* Applications : `ModuleWindow` ne rend rien tant que le module
+                n'est pas monté dans le shell. Les modules système le sont
+                toujours, les modules métier seulement une fois installés. */}
+            {modulesTous.map((mod) => (
+              <AppMontee key={mod.id || mod.slug || mod.icon} mod={mod} />
+            ))}
+            {/* Applications créées dans le Studio : pas de code, une
+                définition rendue par le moteur générique. */}
+            {customApps.map((app) => (
+              <CustomApp key={app.slug} app={app} />
+            ))}
             {Object.keys(apps)
               .filter((x) => x != "hz")
               .map((key) => apps[key])
@@ -180,8 +247,13 @@ function App() {
             <CalnWid />
           </div>
           <Taskbar />
-          <ActMenu />
           <SavePicker />
+          <ModalHost />
+          {/* Branche `choisirProduit()` : le catalogue devient accessible
+              depuis n'importe quel module, pas seulement depuis Stock. */}
+          <HoteSelecteurProduit />
+          <HoteSelecteurClient />
+          <HoteMenuContextuel />
         </div>
       </ErrorBoundary>
     </div>

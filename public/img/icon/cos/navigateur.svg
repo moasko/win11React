@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" role="img" aria-label="Navigateur">
+  <path d="M13 0h22a13 13 0 0 1 13 13v22a13 13 0 0 1-13 13H4a4 4 0 0 1-4-4V13A13 13 0 0 1 13 0Z" fill="#0284C7"/>
+  <circle cx="24" cy="24" r="12" fill="#fff"/>
+  <g stroke="#0284C7" stroke-width="2.4" stroke-linecap="round" fill="none" opacity=".45">
+    <path d="M12.4 24h23.2"/>
+    <ellipse cx="24" cy="24" rx="5.6" ry="11.9"/>
+  </g>
+</svg>

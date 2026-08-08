@@ -1,22 +1,157 @@
+// Les icônes sont positionnées librement : chacune porte ses coordonnées,
+// l'utilisateur les déplace, et la disposition est retenue par espace de
+// travail (voir src/reducers/deskLayout.js).
 .desktopCont {
-  width: 0;
+  position: relative;
+  width: 100%;
   height: 100%;
+}
+
+// Le bureau accepte les fichiers glissés depuis l'ordinateur : ils
+// atterrissent dans le dossier « Bureau » du cloud.
+.dskDepot {
+  position: absolute;
+  inset: 12px;
+  z-index: 40;
   display: flex;
   flex-direction: column;
-  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  border: 2px dashed rgb(255 255 255 / 75%);
+  border-radius: 16px;
+  background: rgb(20 30 55 / 42%);
+  backdrop-filter: blur(3px);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  text-shadow: 0 1px 3px rgb(0 0 0 / 55%);
+  pointer-events: none;
+
+  .uicon {
+    display: flex;
+  }
+}
+
+.dskEnvoi {
+  position: absolute;
+  left: 50%;
+  bottom: 22px;
+  transform: translateX(-50%);
+  z-index: 40;
+  padding: 9px 18px;
+  border-radius: 10px;
+  background: rgb(16 16 20 / 92%);
+  color: #fff;
+  font-size: 12.5px;
+  box-shadow: 0 10px 28px rgb(0 0 0 / 40%);
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+// Un nom de fichier peut être très long — et contrairement à un nom
+// d'application, on ne le choisit pas. Il tient donc sur une seule ligne,
+// dans la largeur de sa case, et déborde en points de suspension. Le nom
+// entier reste lisible dans l'infobulle.
+.dskFichier .appName {
+  width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 0 2px;
+  box-sizing: border-box;
+}
+
+// Suppression : bouton discret, révélé au survol ou quand la case a le
+// focus clavier. La touche Suppr fait la même chose.
+.dskFichier {
+  .dskSuppr {
+    position: absolute;
+    top: 0;
+    right: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: rgb(16 16 20 / 82%);
+    color: #fff;
+    opacity: 0;
+    transition: opacity 130ms ease, background 130ms ease;
+
+    .uicon {
+      display: flex;
+    }
+
+    &:hover {
+      background: #d93025;
+    }
+  }
+
+  &:hover .dskSuppr,
+  &:focus-within .dskSuppr {
+    opacity: 1;
+  }
+}
+
+// Vignette d'un fichier posé sur le bureau : même gabarit qu'une icône
+// d'application, mais c'est l'aperçu réel du fichier qui s'affiche.
+.dskFichier .dskThumb {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1;
+
+  .imageCont,
+  .thumbBox {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  // L'icône de type suit la taille de la case, pas son gabarit de grille.
+  .thumbIcone {
+    width: 100%;
+    height: 100%;
+  }
+
+  img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    border-radius: 4px;
+  }
 }
 
 .dskApp {
-  margin: 4px;
-  height: 84px;
-  width: 74px;
+  position: absolute;
+  // La taille suit le réglage « Taille des icônes » des Paramètres.
+  height: calc(84px * var(--dskScale, 1));
+  width: calc(74px * var(--dskScale, 1));
   display: flex;
   flex-direction: column;
   align-items: center;
   font-size: 0.8em;
-  transition: all ease-in-out 200ms;
   justify-content: center;
   border: 1px solid transparent;
+  border-radius: 4px;
+  touch-action: none;
+  transition:
+    left 140ms ease-out,
+    top 140ms ease-out,
+    background 200ms ease-in-out;
+
+  // Pendant le glisser : plus de transition, sinon l'icône traîne
+  // derrière le pointeur.
+  &[data-dragging="true"] {
+    transition: none;
+    z-index: 10;
+    background: rgba(255, 255, 255, 0.28);
+    cursor: grabbing;
+  }
 
   &:focus {
     background: rgba(255, 255, 255, 0.24);
@@ -26,6 +161,10 @@
   }
   &:focus {
     border: 1px dotted white;
+  }
+
+  .dskIcon img {
+    object-fit: contain;
   }
 
   .appName {
@@ -48,6 +187,18 @@
   width: 640px;
   height: min(100% - 24px, 720px);
   left: 0;
+  // Ces déclarations doivent rester avant les règles imbriquées : Sass
+  // avertit que leur ordre d'émission change dans une version à venir.
+  color: var(--dark-txt);
+  background: var(--bg1);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  border-radius: var(--roundRad);
+  overflow: hidden;
+  transition: all 0.2s cubic-bezier(0.79, 0.14, 0.15, 0.86);
+  z-index: 9999;
+  box-sizing: border-box;
+
   &[data-align="center"] {
     margin-left: auto;
     margin-right: auto;
@@ -58,16 +209,6 @@
   &[data-align="left"] {
     left: 8px;
   }
-
-  color: var(--dark-txt);
-  background: var(--bg1);
-  -webkit-backdrop-filter: blur(20px);
-  backdrop-filter: blur(20px);
-  border-radius: var(--roundRad);
-  overflow: hidden;
-  transition: all 0.2s cubic-bezier(0.79, 0.14, 0.15, 0.86);
-  z-index: 9999;
-  box-sizing: border-box;
 
   &[data-hide="true"] {
     transform: translateY(100px);
@@ -161,9 +302,14 @@ body[data-theme="dark"] .startMenu {
   align-items: center;
   justify-content: center;
   border-radius: 4px;
+  color: var(--txt-col);
 
   &:hover {
     background: var(--bg2);
+  }
+
+  .uicon {
+    display: flex;
   }
 }
 

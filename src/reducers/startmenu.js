@@ -7,7 +7,6 @@ const defState = {
   menu: false,
   showAll: false,
   alpha: false,
-  pwctrl: false,
   curAlpha: "A",
 };
 
@@ -18,14 +17,12 @@ const menuReducer = (state = defState, action) => {
         ...state,
         menu: true,
         hide: false,
-        pwctrl: false,
       };
     case "STARTHID":
       return {
         ...state,
         hide: true,
         showAll: false,
-        pwctrl: false,
       };
     case "STARTOGG":
       return {
@@ -34,7 +31,6 @@ const menuReducer = (state = defState, action) => {
         menu: true,
         alpha: false,
         curAlpha: "A",
-        pwctrl: false,
         showAll: state.menu && state.showAll ? true : null,
       };
     case "STARTALL":
@@ -42,14 +38,12 @@ const menuReducer = (state = defState, action) => {
         ...state,
         showAll: !state.showAll,
         alpha: false,
-        pwctrl: false,
         curAlpha: "A",
       };
     case "STARTALPHA":
       return {
         ...state,
         alpha: !state.alpha,
-        pwctrl: false,
         curAlpha: action.payload || "A",
       };
     case "STARTSRC":
@@ -57,12 +51,10 @@ const menuReducer = (state = defState, action) => {
         ...state,
         hide: !(state.hide || state.menu),
         menu: false,
-        pwctrl: false,
       };
     case "STARTPWC":
       return {
         ...state,
-        pwctrl: true,
       };
     default:
       return state;

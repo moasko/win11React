@@ -1,0 +1,46 @@
+// Charte visuelle des applications CompanyOS.
+//
+// Jusqu'ici, chaque module recopiait ses propres jetons (`--qr-bg`,
+// `--crm-line`, `--pj-accent`…) : douze lignes à dupliquer, et autant
+// d'occasions de dériver. Ils sont désormais déclarés une fois pour toutes
+// sur `.moduleWin`, la classe que `ModuleWindow` pose sur chaque fenêtre.
+//
+// Une nouvelle application n'a donc **rien** à écrire pour être à la
+// charte : elle utilise `var(--app-…)` et les composants de `src/apps/ui/`.
+//
+// Les modules antérieurs gardent leurs jetons propres — les deux systèmes
+// coexistent, il n'y a rien à migrer en urgence.
+
+.moduleWin {
+  --app-bg: #ffffff;
+  --app-panneau: #f8f9fb;
+  --app-carte: #ffffff;
+  --app-champ: #ffffff;
+  --app-line: #e3e6eb;
+  --app-text: #1f2733;
+  --app-muted: #6b7684;
+  --app-accent: #1a73e8;
+  --app-accent-soft: #e8f0fe;
+  --app-ok: #188038;
+  --app-attention: #b06000;
+  --app-danger: #d93025;
+  --app-rayon: 6px;
+  --app-rayon-large: 10px;
+  --app-ombre: 0 2px 10px rgb(0 0 0 / 10%);
+}
+
+body[data-theme="dark"] .moduleWin {
+  --app-bg: #262630;
+  --app-panneau: #1e1e26;
+  --app-carte: #2d2d38;
+  --app-champ: #1e1e26;
+  --app-line: #35353f;
+  --app-text: #e8e8ee;
+  --app-muted: #9a9aa8;
+  --app-accent: #6f8dff;
+  --app-accent-soft: #2f3a4e;
+  --app-ok: #5fbf7f;
+  --app-attention: #e0aa54;
+  --app-danger: #e2716a;
+  --app-ombre: 0 2px 12px rgb(0 0 0 / 40%);
+}

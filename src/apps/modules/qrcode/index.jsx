@@ -1,12 +1,14 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+﻿import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 import { ModuleWindow } from "../../ModuleWindow";
 import { Icon } from "../../../utils/general";
 import { api } from "../../../api/client";
 import { saveAs } from "../../cloud";
-import { scrollSectionIntoView } from "../../scrollTo";
+import { scrollElementTo } from "../../scrollTo";
+import { modal } from "../../modalRequest";
 import { TYPES } from "./types";
 import { buildMatrix, drawToCanvas, toSvg, toPdf, toEps } from "./render";
+import { Avatar } from "../../Avatar";
 import "./qrcode.scss";
 
 const SECTIONS = [
@@ -38,14 +40,20 @@ const DEFAULTS = {
 
 export const manifest = {
   slug: "qrcode",
+  version: "1.1.0",
+  /// Annoncé dans la Boutique quand une mise à jour est disponible.
+  /// Seules les entrées postérieures à la version installée sont montrées.
+  nouveautes: [
+    { version: "1.1.0", texte: "L'historique montre qui a généré chaque code." },
+  ],
   name: "Générateur de QR Code Avancé",
-  icon: "code",
+  icon: "qrcode",
   action: "QRCODEAPP",
   Window: QrApp,
 };
 
 function QrApp() {
-  const wnapp = useSelector((state) => state.apps[manifest.icon]);
+  const wnapp = useSelector((state) => state.apps[manifest.id || manifest.icon]);
   const session = useSelector((state) => state.session);
 
   const [section, setSection] = useState("contenu");
@@ -115,9 +123,11 @@ function QrApp() {
     setOptions((o) => ({ ...o, [key]: value }));
   };
 
+  // Les entrées de la barre latérale sont des onglets : on change de
+  // panneau et on repart du haut, plutôt que de faire défiler une page.
   const goToSection = (id) => {
     setSection(id);
-    scrollSectionIntoView(scrollRef.current, sectionRefs.current[id]);
+    scrollElementTo(scrollRef.current, 0);
   };
 
   const pickLogo = (e) => {
@@ -239,6 +249,14 @@ function QrApp() {
   };
 
   const removeRecord = async (record) => {
+    const ok = await modal.confirm({
+      title: "Retirer de l'historique",
+      message: `Retirer « ${record.data.name || "ce QR code"} » de l'historique ?`,
+      detail: "Le fichier déjà enregistré dans le cloud n'est pas touché.",
+      confirmLabel: "Retirer",
+      danger: true,
+    });
+    if (!ok) return;
     try {
       await api.records.remove(manifest.slug, "history", record.id);
       await loadHistory();
@@ -283,7 +301,7 @@ function QrApp() {
 
           {/* Colonne centrale */}
           <div className="qrMain win11Scroll" ref={scrollRef}>
-            <section ref={registerSection("contenu")} className="qrSection">
+            <section ref={registerSection("contenu")} className="qrSection" data-hidden={section !== "contenu"}>
               <h2>
                 <span className="qrNum">1.</span> Type de contenu
               </h2>
@@ -308,7 +326,7 @@ function QrApp() {
               </div>
             </section>
 
-            <section className="qrSection">
+            <section className="qrSection" data-hidden={section !== "contenu"}>
               <h2>
                 <span className="qrNum">2.</span> Contenu
               </h2>
@@ -371,7 +389,7 @@ function QrApp() {
               ) : null}
             </section>
 
-            <section ref={registerSection("apparence")} className="qrSection">
+            <section ref={registerSection("apparence")} className="qrSection" data-hidden={section !== "apparence"}>
               <h2>
                 <span className="qrNum">3.</span> Apparence
               </h2>
@@ -453,7 +471,7 @@ function QrApp() {
               </div>
             </section>
 
-            <section ref={registerSection("personnalisation")} className="qrSection">
+            <section ref={registerSection("personnalisation")} className="qrSection" data-hidden={section !== "personnalisation"}>
               <h2>
                 <span className="qrNum">4.</span> Personnalisation
               </h2>
@@ -521,7 +539,7 @@ function QrApp() {
               </div>
             </section>
 
-            <section ref={registerSection("avancees")} className="qrSection">
+            <section ref={registerSection("avancees")} className="qrSection" data-hidden={section !== "avancees"}>
               <h2>
                 <span className="qrNum">5.</span> Options avancées
               </h2>
@@ -558,7 +576,7 @@ function QrApp() {
               </div>
             </section>
 
-            <section ref={registerSection("analytics")} className="qrSection">
+            <section ref={registerSection("analytics")} className="qrSection" data-hidden={section !== "analytics"}>
               <h2>
                 <span className="qrNum">6.</span> Analytics
               </h2>
@@ -589,10 +607,19 @@ function QrApp() {
                 <div className="qrHistList">
                   {history.map((record) => (
                     <div key={record.id} className="qrHistRow">
+                      {/* L'historique est partagé par tout l'espace : sans
+                          visage, on ne sait pas de qui vient un code. */}
+                      <Avatar
+                        user={record.auteur}
+                        nom={record.auteur?.name || "?"}
+                        taille={24}
+                      />
                       <div className="qrHistInfo handcr" onClick={() => restore(record)}>
                         <div className="qrHistName">{record.data.name}</div>
                         <div className="qrHistMeta">
                           {TYPES.find((t) => t.id === record.data.typeId)?.label}
+                          {" · "}
+                          {record.auteur?.name || "compte supprimé"}
                           {" · "}
                           {new Date(record.createdAt).toLocaleDateString("fr-FR")}
                         </div>

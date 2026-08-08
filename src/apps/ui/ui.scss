@@ -1,0 +1,384 @@
+// Composants partagés des applications CompanyOS.
+// Les jetons viennent de theme.scss, posés sur `.moduleWin`.
+
+@use "./theme.scss";
+
+.moduleWin {
+  // ---- Coquille : nav + centre + panneau ---------------------------------
+
+  .uiCoquille {
+    display: flex;
+    flex-grow: 1;
+    min-height: 0;
+    background: var(--app-bg);
+    color: var(--app-text);
+  }
+
+  .uiNav {
+    width: 178px;
+    flex-shrink: 0;
+    overflow-y: auto;
+    padding: 14px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    border-right: 1px solid var(--app-line);
+  }
+
+  .uiNavItem {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 8px 11px;
+    border-radius: var(--app-rayon);
+    font-size: 0.76em;
+    color: var(--app-muted);
+    cursor: default;
+
+    .uicon {
+      display: flex;
+    }
+
+    &:hover {
+      background: rgb(128 128 128 / 12%);
+    }
+
+    &[data-actif="true"] {
+      background: var(--app-accent-soft);
+      color: var(--app-accent);
+      font-weight: 600;
+    }
+  }
+
+  .uiCentre {
+    flex-grow: 1;
+    min-width: 0;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 18px 24px 28px;
+  }
+
+  .uiPanneau {
+    width: 232px;
+    flex-shrink: 0;
+    overflow-y: auto;
+    padding: 16px 14px;
+    background: var(--app-panneau);
+    border-left: 1px solid var(--app-line);
+  }
+
+  // ---- Sections ----------------------------------------------------------
+
+  .uiSection {
+    padding-bottom: 4px;
+    margin-bottom: 18px;
+    border-bottom: 1px solid var(--app-line);
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    // Un onglet inactif n'existe pas à l'écran : on ne le cache pas
+    // seulement, on le retire du flux.
+    &[data-cache="true"] {
+      display: none;
+    }
+  }
+
+  .uiSectionTitre {
+    display: flex;
+    align-items: baseline;
+    gap: 7px;
+    font-size: 0.92em;
+    font-weight: 600;
+    margin: 0;
+
+    .uiNum {
+      color: var(--app-accent);
+    }
+  }
+
+  .uiAide {
+    font-size: 0.72em;
+    color: var(--app-muted);
+    line-height: 1.5;
+    margin: 3px 0 14px;
+  }
+
+  // ---- Champs ------------------------------------------------------------
+
+  .uiChamp {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-bottom: 14px;
+    min-width: 0;
+
+    > label {
+      font-size: 0.72em;
+      color: var(--app-muted);
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      font-family: inherit;
+      font-size: 0.78em;
+      color: var(--app-text);
+      background: var(--app-champ);
+      border: 1px solid var(--app-line);
+      border-radius: var(--app-rayon);
+      padding: 8px 11px;
+      resize: vertical;
+
+      &:focus {
+        outline: none;
+        border-color: var(--app-accent);
+      }
+
+      &:disabled {
+        opacity: 0.55;
+      }
+    }
+  }
+
+  .uiLigne {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .uiColonnes {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(var(--uiCols, 2), minmax(0, 1fr));
+  }
+
+  // ---- Boutons -----------------------------------------------------------
+
+  .uiBouton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    font-family: inherit;
+    font-size: 0.74em;
+    padding: 8px 16px;
+    border-radius: var(--app-rayon);
+    border: 1px solid transparent;
+    background: var(--app-accent);
+    color: #fff;
+    font-weight: 600;
+    cursor: default;
+    white-space: nowrap;
+
+    .uicon {
+      display: flex;
+    }
+
+    &:hover {
+      filter: brightness(1.08);
+    }
+
+    &[data-variante="secondaire"] {
+      background: var(--app-bg);
+      color: var(--app-text);
+      border-color: var(--app-line);
+      font-weight: 400;
+
+      &:hover {
+        filter: none;
+        border-color: var(--app-accent);
+        color: var(--app-accent);
+      }
+    }
+
+    &[data-variante="danger"] {
+      background: var(--app-danger);
+    }
+
+    &[data-large="true"] {
+      width: 100%;
+    }
+
+    &[data-off="true"] {
+      opacity: 0.45;
+      pointer-events: none;
+    }
+  }
+
+  // ---- Chips (choix multiples) -------------------------------------------
+
+  .uiChips {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+    gap: 8px;
+  }
+
+  .uiChip {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 9px 10px;
+    border: 1px solid var(--app-line);
+    border-radius: var(--app-rayon);
+    background: var(--app-carte);
+    font-size: 0.74em;
+    text-align: center;
+    cursor: default;
+
+    .uicon {
+      display: flex;
+    }
+
+    &:hover {
+      border-color: var(--app-accent);
+    }
+
+    &[data-actif="true"] {
+      border-color: var(--app-accent);
+      background: var(--app-accent-soft);
+      color: var(--app-accent);
+      font-weight: 600;
+    }
+  }
+
+  // ---- Interrupteur ------------------------------------------------------
+
+  .uiBascule {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    font-size: 0.74em;
+    cursor: default;
+
+    .uiPiste {
+      position: relative;
+      width: 34px;
+      height: 18px;
+      border-radius: 9px;
+      background: var(--app-line);
+      transition: background 140ms ease;
+      flex-shrink: 0;
+
+      &::after {
+        content: "";
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: #fff;
+        transition: transform 140ms ease;
+      }
+    }
+
+    &[data-on="true"] .uiPiste {
+      background: var(--app-accent);
+
+      &::after {
+        transform: translateX(16px);
+      }
+    }
+  }
+
+  // ---- Messages ----------------------------------------------------------
+
+  .uiNotice {
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+    padding: 9px 12px;
+    border-radius: var(--app-rayon);
+    font-size: 0.73em;
+    line-height: 1.5;
+    border: 1px solid var(--app-line);
+    background: var(--app-panneau);
+    color: var(--app-text);
+
+    .uicon {
+      display: flex;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    &[data-ton="info"] {
+      border-color: var(--app-accent);
+      background: var(--app-accent-soft);
+      color: var(--app-accent);
+    }
+
+    &[data-ton="succes"] {
+      border-color: var(--app-ok);
+      color: var(--app-ok);
+    }
+
+    &[data-ton="attention"] {
+      border-color: var(--app-attention);
+      color: var(--app-attention);
+    }
+
+    &[data-ton="erreur"] {
+      border-color: var(--app-danger);
+      color: var(--app-danger);
+    }
+  }
+
+  // ---- État vide ---------------------------------------------------------
+
+  .uiVide {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex-grow: 1;
+    gap: 10px;
+    padding: 34px 24px;
+    text-align: center;
+
+    .uiVideIcone {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 64px;
+      height: 64px;
+      border-radius: 18px;
+      background: var(--app-accent-soft);
+      color: var(--app-accent);
+
+      .uicon {
+        display: flex;
+      }
+    }
+
+    .uiVideTitre {
+      font-size: 0.88em;
+      font-weight: 600;
+    }
+
+    .uiVideAide {
+      font-size: 0.74em;
+      color: var(--app-muted);
+      line-height: 1.6;
+      max-width: 320px;
+    }
+  }
+
+  // ---- Barre d'outils ----------------------------------------------------
+
+  .uiBarre {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--app-line);
+    flex-shrink: 0;
+
+    .uiEspace {
+      flex-grow: 1;
+    }
+  }
+}

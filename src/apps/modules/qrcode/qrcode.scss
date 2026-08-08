@@ -1,4 +1,4 @@
-// Générateur de QR Code Avancé.
+﻿// Générateur de QR Code Avancé.
 // Habillage clair calqué sur la maquette produit, avec une déclinaison
 // sombre pour ne pas jurer quand l'OS est en thème sombre.
 
@@ -14,12 +14,18 @@
   --qr-field: #ffffff;
   --qr-link: #188038;
 
-  width: 82%;
-  height: 82%;
-  top: 7%;
-  left: 9%;
   background: var(--qr-bg);
   color: var(--qr-text);
+
+  // Trois colonnes : il faut de la largeur, sans occuper tout l'écran.
+  &.floatTab[data-size="mini"] {
+    width: 74%;
+    height: 76%;
+    top: 10%;
+    left: 13%;
+    min-width: 720px;
+    min-height: 480px;
+  }
 
   .qrLocked {
     display: flex;
@@ -81,13 +87,12 @@
   }
 
   .qrSection {
-    padding-bottom: 22px;
-    margin-bottom: 20px;
-    border-bottom: 1px solid var(--qr-line);
+    padding-bottom: 4px;
+    margin-bottom: 18px;
 
-    &:last-child {
-      border-bottom: none;
-      margin-bottom: 0;
+    // Onglet inactif : le panneau n'existe pas à l'écran.
+    &[data-hidden="true"] {
+      display: none;
     }
 
     h2 {

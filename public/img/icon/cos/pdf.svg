@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" role="img" aria-label="Lecteur PDF">
+  <path d="M13 0h22a13 13 0 0 1 13 13v22a13 13 0 0 1-13 13H4a4 4 0 0 1-4-4V13A13 13 0 0 1 13 0Z" fill="#DC2626"/>
+  <path d="M15 14a2 2 0 0 1 2-2h9l8 8v15a2 2 0 0 1-2 2H17a2 2 0 0 1-2-2Z" fill="#fff"/>
+  <path d="M26 12l8 8h-6a2 2 0 0 1-2-2Z" fill="#DC2626" opacity=".35"/>
+  <rect x="18.5" y="26" width="11" height="6" rx="2" fill="#DC2626" opacity=".55"/>
+</svg>

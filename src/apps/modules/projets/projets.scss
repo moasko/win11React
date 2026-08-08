@@ -1,0 +1,1187 @@
+// Gestion de projet — tableaux kanban.
+//
+// Charte des modules : jetons de thème portés par la classe racine,
+// déclinaison sombre en fin de fichier. La planche est plus dense que les
+// autres modules parce qu'un kanban se lit d'un coup d'œil : ce sont les
+// cartes qui doivent occuper l'écran, pas le décor.
+
+.projetsApp {
+  --pj-bg: #ffffff;
+  --pj-rail: #f7f8fa;
+  --pj-planche: #eef1f5;
+  --pj-colonne: #e8ebf0;
+  --pj-carte: #ffffff;
+  --pj-line: #dfe3e9;
+  --pj-text: #1f2733;
+  --pj-muted: #6b7684;
+  --pj-accent: #0079bf;
+  --pj-accent-soft: #e4f0f9;
+  --pj-danger: #d93025;
+  --pj-ok: #1f9d55;
+  background: var(--pj-bg);
+  color: var(--pj-text);
+
+  &.floatTab[data-size="mini"] {
+    width: 82%;
+    height: 84%;
+    top: 7%;
+    left: 9%;
+    min-width: 900px;
+    min-height: 540px;
+  }
+
+  .pjShell {
+    display: flex;
+    flex-grow: 1;
+    min-height: 0;
+    position: relative;
+  }
+
+  .pjCache {
+    display: none;
+  }
+
+  .pjVide {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-grow: 1;
+    padding: 30px;
+    text-align: center;
+    font-size: 0.8em;
+    color: var(--pj-muted);
+  }
+
+  button {
+    font-family: inherit;
+    border: none;
+    cursor: default;
+  }
+
+  // ---- Rail des tableaux --------------------------------------------------
+
+  .pjRail {
+    width: 194px;
+    flex-shrink: 0;
+    overflow-y: auto;
+    padding: 12px 8px;
+    background: var(--pj-rail);
+    border-right: 1px solid var(--pj-line);
+  }
+
+  .pjRailTitre {
+    font-size: 0.64em;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--pj-muted);
+    padding: 0 8px 8px;
+  }
+
+  .pjRailItem {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 9px;
+    border-radius: 6px;
+    font-size: 0.74em;
+
+    .pjRailNom {
+      flex-grow: 1;
+      min-width: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    &:hover {
+      background: rgb(0 0 0 / 4%);
+    }
+
+    &[data-actif="true"] {
+      background: var(--pj-accent-soft);
+      color: var(--pj-accent);
+      font-weight: 600;
+    }
+  }
+
+  .pjPuce {
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+    flex-shrink: 0;
+  }
+
+  .pjRailAjout {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin-top: 6px;
+    padding: 7px 9px;
+    border-radius: 6px;
+    font-size: 0.72em;
+    color: var(--pj-muted);
+
+    .uicon {
+      display: flex;
+    }
+
+    &:hover {
+      background: rgb(0 0 0 / 4%);
+      color: var(--pj-accent);
+    }
+  }
+
+  // ---- Zone principale ----------------------------------------------------
+
+  .pjMain {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    min-width: 0;
+    min-height: 0;
+  }
+
+  .pjTete {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--pj-line);
+    flex-shrink: 0;
+    flex-wrap: wrap;
+
+    .pjNom {
+      font-size: 0.92em;
+      font-weight: 600;
+      white-space: nowrap;
+
+      &:hover {
+        color: var(--pj-accent);
+      }
+    }
+
+    .pjSpacer {
+      flex-grow: 1;
+    }
+
+    .pjAction {
+      display: flex;
+      padding: 6px;
+      border-radius: 5px;
+      color: var(--pj-muted);
+
+      &:hover {
+        background: var(--pj-accent-soft);
+        color: var(--pj-accent);
+      }
+    }
+  }
+
+  .pjVues {
+    display: flex;
+    gap: 2px;
+    margin-left: 10px;
+    padding: 2px;
+    border-radius: 7px;
+    background: var(--pj-planche);
+  }
+
+  .pjVue {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-size: 0.7em;
+    color: var(--pj-muted);
+
+    .uicon {
+      display: flex;
+    }
+
+    &[data-actif="true"] {
+      background: var(--pj-bg);
+      color: var(--pj-text);
+      font-weight: 600;
+      box-shadow: 0 1px 3px rgb(0 0 0 / 10%);
+    }
+  }
+
+  .pjRecherche,
+  .pjFiltre {
+    font-family: inherit;
+    font-size: 0.72em;
+    color: var(--pj-text);
+    background: var(--pj-bg);
+    border: 1px solid var(--pj-line);
+    border-radius: 6px;
+    padding: 6px 9px;
+
+    &:focus {
+      outline: none;
+      border-color: var(--pj-accent);
+    }
+  }
+
+  .pjRecherche {
+    width: 150px;
+  }
+
+  .pjBascule {
+    font-size: 0.7em;
+    padding: 6px 11px;
+    border: 1px solid var(--pj-line);
+    border-radius: 6px;
+    white-space: nowrap;
+
+    &:hover {
+      border-color: var(--pj-accent);
+      color: var(--pj-accent);
+    }
+
+    &[data-actif="true"] {
+      background: var(--pj-accent);
+      border-color: var(--pj-accent);
+      color: #fff;
+    }
+  }
+
+  // ---- Bandeau de statistiques -------------------------------------------
+
+  .pjStats {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    padding: 8px 16px;
+    font-size: 0.7em;
+    color: var(--pj-muted);
+    background: var(--pj-rail);
+    border-bottom: 1px solid var(--pj-line);
+    flex-shrink: 0;
+
+    b {
+      color: var(--pj-text);
+      font-weight: 600;
+    }
+
+    span[data-alerte="true"] b {
+      color: var(--pj-danger);
+    }
+  }
+
+  .pjJauge {
+    flex-grow: 1;
+    max-width: 220px;
+    height: 6px;
+    border-radius: 3px;
+    background: var(--pj-colonne);
+    overflow: hidden;
+    margin-left: auto;
+
+    div {
+      height: 100%;
+      background: var(--pj-ok);
+      border-radius: 3px;
+      transition: width 240ms ease;
+    }
+  }
+
+  .pjPourcent {
+    font-variant-numeric: tabular-nums;
+  }
+
+  .pjNotice {
+    padding: 7px 16px;
+    font-size: 0.72em;
+    color: var(--pj-accent);
+    background: var(--pj-accent-soft);
+    border-bottom: 1px solid var(--pj-line);
+  }
+
+  // ---- Planche ------------------------------------------------------------
+
+  // La planche défile horizontalement dès qu'il y a plus de colonnes que
+  // de largeur ; c'est chaque colonne qui défile verticalement, pas la
+  // planche — sinon les en-têtes de colonnes disparaîtraient vers le haut.
+  .pjPlanche {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    flex-grow: 1;
+    min-height: 0;
+    min-width: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 14px;
+    background: var(--pj-planche);
+    // Pas de `scroll-behavior: smooth` : sur une planche large, le défilement
+    // à la molette devient poussif et le déplacement automatique pendant un
+    // glisser ne suit plus le curseur.
+
+    // Barre horizontale visible : sur une planche large, c'est le seul
+    // repère qui dit qu'il reste des colonnes à droite.
+    &::-webkit-scrollbar {
+      height: 10px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      border-radius: 5px;
+      background: rgb(0 0 0 / 22%);
+      border: 2px solid transparent;
+      background-clip: content-box;
+
+      &:hover {
+        background: rgb(0 0 0 / 34%);
+        background-clip: content-box;
+      }
+    }
+  }
+
+  .pjColonne {
+    display: flex;
+    flex-direction: column;
+    width: 262px;
+    flex-shrink: 0;
+    max-height: 100%;
+    padding: 8px;
+    border-radius: 10px;
+    background: var(--pj-colonne);
+    transition: background 140ms ease;
+
+    &[data-cible="true"] {
+      background: var(--pj-accent-soft);
+    }
+  }
+
+  .pjColonneTete {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 3px 6px 9px;
+
+    .pjColonneTitre {
+      flex-grow: 1;
+      min-width: 0;
+      font-size: 0.76em;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+
+      &:hover {
+        color: var(--pj-accent);
+      }
+    }
+
+    .pjColonneSuppr {
+      display: flex;
+      opacity: 0;
+      color: var(--pj-muted);
+      transition: opacity 120ms ease;
+
+      &:hover {
+        color: var(--pj-danger);
+      }
+    }
+  }
+
+  .pjColonne:hover .pjColonneSuppr {
+    opacity: 1;
+  }
+
+  .pjCompte {
+    flex-shrink: 0;
+    min-width: 18px;
+    padding: 1px 6px;
+    border-radius: 9px;
+    background: rgb(0 0 0 / 7%);
+    font-size: 0.64em;
+    text-align: center;
+    color: var(--pj-muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .pjCartes {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    min-height: 8px;
+    // Une colonne haute défile chez elle, en gardant son en-tête et son
+    // bouton d'ajout visibles.
+    max-height: calc(100vh - 320px);
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 1px;
+  }
+
+  .pjColonneVide {
+    padding: 14px 8px;
+    text-align: center;
+    font-size: 0.68em;
+    color: var(--pj-muted);
+  }
+
+  // Emplacement d'accueil pendant un glisser : on voit où la carte tombera.
+  .pjFente {
+    height: 34px;
+    border: 2px dashed var(--pj-accent);
+    border-radius: 7px;
+    background: rgb(0 121 191 / 8%);
+  }
+
+  // ---- Carte --------------------------------------------------------------
+
+  .pjCarte {
+    padding: 8px 9px;
+    border-radius: 7px;
+    background: var(--pj-carte);
+    box-shadow: 0 1px 2px rgb(9 30 66 / 20%);
+    cursor: default;
+    transition: transform 120ms ease, box-shadow 120ms ease;
+
+    &:hover {
+      box-shadow: 0 3px 8px rgb(9 30 66 / 22%);
+      transform: translateY(-1px);
+    }
+
+    &[data-glissee="true"] {
+      opacity: 0.4;
+    }
+  }
+
+  .pjEtiquettes {
+    display: flex;
+    gap: 3px;
+    margin-bottom: 6px;
+  }
+
+  .pjEtiquette {
+    width: 30px;
+    height: 6px;
+    border-radius: 3px;
+  }
+
+  .pjCarteTitre {
+    font-size: 0.75em;
+    line-height: 1.45;
+  }
+
+  .pjCarteClient {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 5px;
+    font-size: 0.66em;
+    color: var(--pj-muted);
+
+    .uicon {
+      display: flex;
+    }
+  }
+
+  .pjCartePied {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 7px;
+    font-size: 0.64em;
+    color: var(--pj-muted);
+
+    .uicon {
+      display: flex;
+    }
+  }
+
+  .pjIndice {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+
+    &[data-complet="true"] {
+      color: var(--pj-ok);
+      font-weight: 600;
+    }
+  }
+
+  .pjEcheance {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: rgb(0 0 0 / 6%);
+
+    &[data-etat="retard"] {
+      background: #ffe5e2;
+      color: #b3261e;
+      font-weight: 600;
+    }
+
+    &[data-etat="aujourdhui"] {
+      background: #fff2d5;
+      color: #96590f;
+      font-weight: 600;
+    }
+
+    &[data-etat="bientot"] {
+      background: #fff8e0;
+      color: #7a5c05;
+    }
+
+    &[data-etat="faite"] {
+      background: #e3f6e9;
+      color: #16643b;
+    }
+  }
+
+  .pjAvatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    flex-shrink: 0;
+    margin-left: auto;
+    border-radius: 50%;
+    background: var(--pj-accent);
+    color: #fff;
+    font-size: 0.85em;
+    font-weight: 600;
+  }
+
+  // ---- Composeur et ajouts ------------------------------------------------
+
+  .pjAjout {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin-top: 7px;
+    padding: 7px 8px;
+    border-radius: 6px;
+    font-size: 0.72em;
+    color: var(--pj-muted);
+
+    .uicon {
+      display: flex;
+    }
+
+    &:hover {
+      background: rgb(0 0 0 / 6%);
+      color: var(--pj-text);
+    }
+  }
+
+  .pjComposeur {
+    margin-top: 7px;
+
+    textarea {
+      width: 100%;
+      font-family: inherit;
+      font-size: 0.74em;
+      color: var(--pj-text);
+      background: var(--pj-carte);
+      border: none;
+      border-radius: 7px;
+      padding: 8px 9px;
+      resize: none;
+      box-shadow: 0 1px 2px rgb(9 30 66 / 20%);
+
+      &:focus {
+        outline: 2px solid var(--pj-accent);
+      }
+    }
+  }
+
+  .pjComposeurActions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 6px;
+
+    .uicon {
+      display: flex;
+      color: var(--pj-muted);
+    }
+  }
+
+  .pjColonneNeuve {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 240px;
+    flex-shrink: 0;
+    padding: 11px 12px;
+    border-radius: 10px;
+    background: rgb(0 0 0 / 5%);
+    font-size: 0.74em;
+    color: var(--pj-muted);
+
+    .uicon {
+      display: flex;
+    }
+
+    &:hover {
+      background: rgb(0 0 0 / 9%);
+      color: var(--pj-text);
+    }
+  }
+
+  .pjPrimaire {
+    font-size: 0.72em;
+    font-weight: 600;
+    padding: 6px 14px;
+    border-radius: 6px;
+    background: var(--pj-accent);
+    color: #fff;
+
+    &:hover {
+      filter: brightness(1.08);
+    }
+  }
+
+  .pjSecondaire {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin-top: 8px;
+    font-size: 0.72em;
+    padding: 7px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--pj-line);
+    background: var(--pj-bg);
+    color: var(--pj-text);
+
+    .uicon {
+      display: flex;
+    }
+
+    &:hover {
+      border-color: var(--pj-accent);
+      color: var(--pj-accent);
+    }
+
+    &[data-off="true"] {
+      opacity: 0.5;
+      pointer-events: none;
+    }
+  }
+
+  .pjDanger {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 0.72em;
+    padding: 7px 13px;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--pj-danger);
+    border: 1px solid transparent;
+
+    .uicon {
+      display: flex;
+    }
+
+    &:hover {
+      background: #fdecea;
+      border-color: #f5c4bf;
+    }
+  }
+
+  // ---- Vue liste ----------------------------------------------------------
+
+  .pjListe {
+    flex-grow: 1;
+    min-height: 0;
+    overflow: auto;
+    padding: 12px 14px;
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.73em;
+    }
+
+    th {
+      text-align: left;
+      font-weight: 600;
+      color: var(--pj-muted);
+      font-size: 0.92em;
+      padding: 7px 10px;
+      border-bottom: 1px solid var(--pj-line);
+      position: sticky;
+      top: 0;
+      background: var(--pj-bg);
+    }
+
+    td {
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--pj-line);
+      vertical-align: middle;
+    }
+
+    tbody tr:hover {
+      background: var(--pj-accent-soft);
+    }
+
+    .pjListeTitre {
+      font-weight: 600;
+    }
+
+    .pjEcheance {
+      display: inline-flex;
+    }
+  }
+
+  // ---- Vue échéances ------------------------------------------------------
+
+  .pjEcheancier {
+    flex-grow: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 14px 16px;
+  }
+
+  .pjGroupe {
+    margin-bottom: 18px;
+  }
+
+  .pjGroupeTitre {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin-bottom: 8px;
+    font-size: 0.76em;
+    font-weight: 600;
+
+    &[data-etat="retard"] {
+      color: var(--pj-danger);
+    }
+
+    &[data-etat="aujourdhui"] {
+      color: #96590f;
+    }
+  }
+
+  .pjLigne {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 9px 12px;
+    margin-bottom: 5px;
+    border-radius: 7px;
+    background: var(--pj-carte);
+    border: 1px solid var(--pj-line);
+    font-size: 0.74em;
+
+    .pjLigneTitre {
+      flex-grow: 1;
+      min-width: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .pjLigneCol,
+    .pjLigneDate {
+      flex-shrink: 0;
+      font-size: 0.9em;
+      color: var(--pj-muted);
+    }
+
+    .pjAvatar {
+      margin-left: 0;
+      width: 20px;
+      height: 20px;
+    }
+
+    &:hover {
+      border-color: var(--pj-accent);
+    }
+  }
+
+  // ---- Panneau de carte ---------------------------------------------------
+
+  .pjPanneauFond {
+    position: absolute;
+    inset: 0;
+    z-index: 30;
+    display: flex;
+    justify-content: flex-end;
+    background: rgb(0 0 0 / 32%);
+    backdrop-filter: blur(2px);
+  }
+
+  .pjPanneau {
+    display: flex;
+    flex-direction: column;
+    width: 430px;
+    max-width: 92%;
+    background: var(--pj-bg);
+    box-shadow: -12px 0 34px rgb(0 0 0 / 26%);
+    animation: pjEntre 180ms ease-out;
+  }
+
+  @keyframes pjEntre {
+    from {
+      transform: translateX(24px);
+      opacity: 0;
+    }
+  }
+
+  .pjPanneauTete {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 13px 16px;
+    border-bottom: 1px solid var(--pj-line);
+
+    .uicon {
+      display: flex;
+      color: var(--pj-muted);
+
+      &:hover {
+        color: var(--pj-text);
+      }
+    }
+  }
+
+  .pjPanneauTitre {
+    flex-grow: 1;
+    min-width: 0;
+    font-family: inherit;
+    font-size: 0.92em;
+    font-weight: 600;
+    color: var(--pj-text);
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    padding: 5px 8px;
+
+    &:hover {
+      border-color: var(--pj-line);
+    }
+
+    &:focus {
+      outline: none;
+      border-color: var(--pj-accent);
+      background: var(--pj-bg);
+    }
+  }
+
+  .pjPanneauCorps {
+    flex-grow: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 14px 16px 20px;
+  }
+
+  .pjPanneauPied {
+    padding: 11px 16px;
+    border-top: 1px solid var(--pj-line);
+  }
+
+  .pjChamp {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-bottom: 14px;
+    min-width: 0;
+
+    label {
+      font-size: 0.68em;
+      font-weight: 600;
+      color: var(--pj-muted);
+    }
+
+    input,
+    select,
+    textarea {
+      font-family: inherit;
+      font-size: 0.75em;
+      color: var(--pj-text);
+      background: var(--pj-bg);
+      border: 1px solid var(--pj-line);
+      border-radius: 6px;
+      padding: 7px 9px;
+      resize: vertical;
+
+      &:focus {
+        outline: none;
+        border-color: var(--pj-accent);
+      }
+    }
+  }
+
+  .pjDeuxColonnes {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .pjAide {
+    font-size: 0.66em;
+    color: var(--pj-muted);
+    line-height: 1.5;
+    margin-top: 6px;
+    display: block;
+  }
+
+  .pjChoixEtiquettes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+
+  .pjPastille {
+    padding: 4px 10px;
+    border-radius: 5px;
+    font-size: 0.66em;
+    color: #fff;
+    opacity: 0.42;
+    transition: opacity 120ms ease;
+
+    &[data-actif="true"] {
+      opacity: 1;
+      box-shadow: 0 0 0 2px var(--pj-bg), 0 0 0 3px currentColor;
+    }
+
+    &:hover {
+      opacity: 0.8;
+    }
+  }
+
+  .pjSection {
+    padding-top: 14px;
+    margin-top: 4px;
+    border-top: 1px solid var(--pj-line);
+    margin-bottom: 14px;
+  }
+
+  .pjSectionTitre {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+    font-size: 0.74em;
+    font-weight: 600;
+
+    .uicon {
+      display: flex;
+      color: var(--pj-muted);
+    }
+  }
+
+  .pjRattache {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+    padding: 8px 11px;
+    border-radius: 6px;
+    background: var(--pj-accent-soft);
+    color: var(--pj-accent);
+    font-size: 0.7em;
+
+    .uicon {
+      display: flex;
+    }
+  }
+
+  .pjPiece {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 9px;
+    border-radius: 6px;
+    border: 1px solid var(--pj-line);
+    margin-bottom: 5px;
+    font-size: 0.72em;
+
+    .uicon {
+      display: flex;
+      flex-shrink: 0;
+      color: var(--pj-muted);
+    }
+
+    .pjPieceNom {
+      flex-grow: 1;
+      min-width: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+
+      &:hover {
+        color: var(--pj-accent);
+        text-decoration: underline;
+      }
+    }
+  }
+
+  // Emplacement d'accueil pendant le réordonnancement d'une tâche.
+  .pjFenteTache {
+    height: 22px;
+    margin: 2px 0;
+    border: 2px dashed var(--pj-accent);
+    border-radius: 5px;
+    background: rgb(0 121 191 / 8%);
+  }
+
+  .pjTache {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 5px 2px;
+    border-radius: 5px;
+    font-size: 0.74em;
+
+    .pjPoignee {
+      display: flex;
+      flex-shrink: 0;
+      color: var(--pj-muted);
+      opacity: 0;
+      cursor: grab;
+      transition: opacity 120ms ease;
+    }
+
+    &:hover {
+      background: rgb(0 0 0 / 3%);
+
+      .pjPoignee {
+        opacity: 1;
+      }
+    }
+
+    &[data-glissee="true"] {
+      opacity: 0.4;
+    }
+
+    input[type="checkbox"] {
+      accent-color: var(--pj-accent);
+      flex-shrink: 0;
+    }
+
+    span {
+      flex-grow: 1;
+      min-width: 0;
+
+      &[data-fait="true"] {
+        text-decoration: line-through;
+        color: var(--pj-muted);
+      }
+    }
+
+    .uicon {
+      display: flex;
+      opacity: 0;
+      color: var(--pj-muted);
+    }
+
+    &:hover .uicon {
+      opacity: 1;
+    }
+  }
+
+  .pjAjoutLigne {
+    width: 100%;
+    margin-top: 7px;
+    font-family: inherit;
+    font-size: 0.73em;
+    color: var(--pj-text);
+    background: var(--pj-bg);
+    border: 1px solid var(--pj-line);
+    border-radius: 6px;
+    padding: 7px 9px;
+
+    &:focus {
+      outline: none;
+      border-color: var(--pj-accent);
+    }
+  }
+
+  .pjCommentaire {
+    display: flex;
+    gap: 9px;
+    margin-bottom: 10px;
+
+    .pjAvatar {
+      margin-left: 0;
+      width: 26px;
+      height: 26px;
+      font-size: 0.7em;
+    }
+  }
+
+  .pjCommentaireTete {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    font-size: 0.7em;
+
+    em {
+      font-style: normal;
+      color: var(--pj-muted);
+      font-size: 0.9em;
+    }
+  }
+
+  .pjCommentaireTexte {
+    font-size: 0.73em;
+    line-height: 1.5;
+    margin-top: 2px;
+    white-space: pre-wrap;
+  }
+}
+
+body[data-theme="dark"] .projetsApp {
+  --pj-bg: #262630;
+  --pj-rail: #22222b;
+  --pj-planche: #1b1b22;
+  --pj-colonne: #23232d;
+  --pj-carte: #2d2d38;
+  --pj-line: #35353f;
+  --pj-text: #e8e8ee;
+  --pj-muted: #9a9aa8;
+  --pj-accent: #6f8dff;
+  --pj-accent-soft: #2f3a4e;
+  --pj-danger: #e2716a;
+  --pj-ok: #5fbf7f;
+
+  .pjCarte {
+    box-shadow: 0 1px 2px rgb(0 0 0 / 45%);
+  }
+
+  .pjEcheance {
+    background: rgb(255 255 255 / 8%);
+
+    &[data-etat="retard"] {
+      background: #3a2422;
+      color: #f0a09a;
+    }
+
+    &[data-etat="aujourdhui"] {
+      background: #3a3020;
+      color: #f0cd7a;
+    }
+
+    &[data-etat="bientot"] {
+      background: #32301f;
+      color: #ddd08a;
+    }
+
+    &[data-etat="faite"] {
+      background: #22332a;
+      color: #8fd6a8;
+    }
+  }
+
+  .pjDanger:hover {
+    background: #3a2422;
+    border-color: #5d3230;
+  }
+}

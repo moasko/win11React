@@ -1,0 +1,467 @@
+// Achats — voir index.jsx.
+//
+// Trois colonnes : les commandes à gauche, le détail au centre, et le
+// panneau « sous le seuil » à droite — la seule liste qu'un acheteur veut
+// garder sous les yeux en permanence.
+
+.achApp {
+  --ach-bg: #ffffff;
+  --ach-panel: #f7f8fa;
+  --ach-line: #e3e6eb;
+  --ach-text: #1f2733;
+  --ach-muted: #6b7684;
+  --ach-accent: #059669; // émeraude : les flux de marchandises et d'argent
+  --ach-accent-soft: #e7f4ef;
+  --ach-ok: #047857;
+  --ach-danger: #c0392b;
+  --ach-attention: #b26a00;
+
+  background: var(--ach-bg);
+  color: var(--ach-text);
+
+  &.floatTab[data-size="mini"] {
+    width: 84%;
+    height: 84%;
+    top: 7%;
+    left: 8%;
+    min-width: 960px;
+    min-height: 560px;
+  }
+
+  .achVerrou {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-grow: 1;
+    font-size: 0.84em;
+    color: var(--ach-muted);
+  }
+
+  .achShell {
+    display: grid;
+    grid-template-columns: 264px minmax(0, 1fr) 232px;
+    flex-grow: 1;
+    min-height: 0;
+  }
+
+  // ---- Liste des commandes ------------------------------------------------
+
+  .achListe {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    background: var(--ach-panel);
+    border-right: 1px solid var(--ach-line);
+  }
+
+  .achListeTete {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 12px 8px 14px;
+
+    h3 {
+      margin: 0;
+      font-size: 0.84em;
+      font-weight: 600;
+    }
+  }
+
+  .achCartes {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    padding: 0 12px 10px;
+  }
+
+  .achCarte {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 9px 11px;
+    border: 1px solid var(--ach-line);
+    border-radius: 8px;
+    background: var(--ach-bg);
+
+    span {
+      font-size: 0.66em;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--ach-muted);
+    }
+
+    b {
+      font-size: 0.95em;
+      font-variant-numeric: tabular-nums;
+    }
+
+    em {
+      font-size: 0.66em;
+      font-style: normal;
+      color: var(--ach-muted);
+    }
+
+    &[data-ton="attention"] b {
+      color: var(--ach-attention);
+    }
+  }
+
+  .achDefile {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 0 8px 10px;
+  }
+
+  .achLigne {
+    padding: 9px 10px;
+    border-radius: 7px;
+    margin-bottom: 2px;
+
+    &:hover {
+      background: color-mix(in srgb, var(--ach-text) 6%, transparent);
+    }
+
+    &[data-actif="true"] {
+      background: var(--ach-accent-soft);
+    }
+  }
+
+  .achLigneTete {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: 0.78em;
+  }
+
+  .achLigneSous {
+    margin-top: 2px;
+    font-size: 0.7em;
+    color: var(--ach-muted);
+  }
+
+  .achStatut {
+    padding: 2px 8px;
+    border-radius: 100px;
+    font-size: 0.68em;
+    font-weight: 600;
+    background: color-mix(in srgb, var(--ach-muted) 14%, transparent);
+    color: var(--ach-muted);
+    white-space: nowrap;
+
+    &[data-ton="ok"] {
+      background: var(--ach-accent-soft);
+      color: var(--ach-ok);
+    }
+    &[data-ton="info"] {
+      background: #e8f0fe;
+      color: #1a73e8;
+    }
+    &[data-ton="attention"] {
+      background: color-mix(in srgb, var(--ach-attention) 14%, transparent);
+      color: var(--ach-attention);
+    }
+    &[data-ton="off"] {
+      opacity: 0.7;
+    }
+  }
+
+  // ---- Centre -------------------------------------------------------------
+
+  .achCentre {
+    overflow-y: auto;
+    padding: 16px 20px;
+    min-width: 0;
+  }
+
+  .achBloc {
+    padding: 16px 18px;
+    margin-bottom: 14px;
+    border: 1px solid var(--ach-line);
+    border-radius: 10px;
+
+    h3 {
+      margin: 0;
+      font-size: 0.88em;
+      font-weight: 600;
+    }
+  }
+
+  .achBlocTete {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    margin-bottom: 8px;
+  }
+
+  .achBlocFin {
+    margin-left: auto;
+    display: flex;
+    gap: 7px;
+    flex-wrap: wrap;
+  }
+
+  .achFermer {
+    display: flex;
+    padding: 5px;
+    border-radius: 5px;
+    color: var(--ach-muted);
+    margin-left: auto;
+
+    &:hover {
+      color: var(--ach-danger);
+    }
+  }
+
+  .achAide {
+    margin: 0 0 12px;
+    font-size: 0.75em;
+    line-height: 1.55;
+    color: var(--ach-muted);
+  }
+
+  .achChamps {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+    margin-bottom: 12px;
+
+    select,
+    input {
+      box-sizing: border-box;
+      width: 100%;
+      padding: 7px 10px;
+      border: 1px solid var(--ach-line);
+      border-radius: 7px;
+      background: var(--ach-bg);
+      color: var(--ach-text);
+      font-family: inherit;
+      font-size: 0.8em;
+    }
+  }
+
+  // ---- Tableaux -----------------------------------------------------------
+
+  .achTable {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.76em;
+
+    th {
+      text-align: left;
+      padding: 6px 8px;
+      border-bottom: 1px solid var(--ach-line);
+      font-weight: 600;
+      color: var(--ach-muted);
+    }
+
+    td {
+      padding: 5px 8px;
+      border-bottom: 1px solid color-mix(in srgb, var(--ach-line) 55%, transparent);
+    }
+
+    input {
+      box-sizing: border-box;
+      width: 74px;
+      padding: 4px 7px;
+      border: 1px solid var(--ach-line);
+      border-radius: 5px;
+      background: var(--ach-bg);
+      color: var(--ach-text);
+      font-family: inherit;
+      font-size: 1em;
+      text-align: right;
+    }
+  }
+
+  .achMt {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+
+    &[data-ok="true"] {
+      color: var(--ach-ok);
+      font-weight: 600;
+    }
+
+    &[data-attention="true"] {
+      color: var(--ach-attention);
+      font-weight: 600;
+    }
+  }
+
+  .achAjout {
+    margin-top: 10px;
+
+    select {
+      box-sizing: border-box;
+      width: 100%;
+      max-width: 380px;
+      padding: 7px 10px;
+      border: 1px dashed var(--ach-line);
+      border-radius: 7px;
+      background: var(--ach-bg);
+      color: var(--ach-muted);
+      font-family: inherit;
+      font-size: 0.78em;
+    }
+  }
+
+  .achTotaux {
+    display: flex;
+    justify-content: flex-end;
+    gap: 18px;
+    margin-top: 12px;
+    font-size: 0.8em;
+    color: var(--ach-muted);
+
+    b {
+      color: var(--ach-text);
+      font-variant-numeric: tabular-nums;
+    }
+  }
+
+  .achActions {
+    display: flex;
+    gap: 9px;
+    margin-top: 14px;
+  }
+
+  .achFacture {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1px solid color-mix(in srgb, var(--ach-line) 55%, transparent);
+    font-size: 0.78em;
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    span:nth-child(2) {
+      color: var(--ach-muted);
+    }
+
+    .achMt {
+      margin-left: auto;
+    }
+  }
+
+  // ---- Panneau réappro ----------------------------------------------------
+
+  .achPanneau {
+    overflow-y: auto;
+    padding: 14px;
+    background: var(--ach-panel);
+    border-left: 1px solid var(--ach-line);
+
+    h3 {
+      margin: 0 0 8px;
+      font-size: 0.8em;
+      font-weight: 600;
+    }
+  }
+
+  .achReappro {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    padding: 8px 10px;
+    margin-bottom: 6px;
+    border: 1px solid var(--ach-line);
+    border-radius: 7px;
+    background: var(--ach-bg);
+    font-size: 0.74em;
+
+    b {
+      color: var(--ach-accent);
+      font-variant-numeric: tabular-nums;
+    }
+  }
+
+  .achReapproNom {
+    font-weight: 600;
+  }
+
+  .achReapproStock {
+    color: var(--ach-muted);
+    font-size: 0.92em;
+
+    &[data-zero="true"] {
+      color: var(--ach-danger);
+      font-weight: 600;
+    }
+  }
+}
+
+// ---- Formulaires posés en modale — la modale vit à la racine du DOM, pas
+// dans la fenêtre, donc ces règles sortent de .achApp ----------------------
+
+.achFormModale {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  min-width: 300px;
+
+  .achFormLigne {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 130px;
+    align-items: center;
+    gap: 12px;
+    font-size: 0.8em;
+
+    input,
+    select {
+      box-sizing: border-box;
+      width: 100%;
+      padding: 6px 9px;
+      border: 1px solid #cfd4db;
+      border-radius: 6px;
+      font-family: inherit;
+      font-size: 1em;
+    }
+  }
+
+  .achFormTotal {
+    text-align: right;
+    font-size: 0.82em;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .achFormActions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 6px;
+
+    .cosmPrimary {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 7px;
+      background: #059669;
+      color: #fff;
+      font-family: inherit;
+      font-size: 0.8em;
+      font-weight: 600;
+    }
+  }
+}
+
+body[data-theme="dark"] .achApp {
+  --ach-bg: #1f2226;
+  --ach-panel: #17191d;
+  --ach-line: #33383f;
+  --ach-text: #e6e8ea;
+  --ach-muted: #9aa2ad;
+  --ach-accent: #34d399;
+  --ach-accent-soft: #1d3a30;
+  --ach-ok: #34d399;
+  --ach-danger: #f87171;
+  --ach-attention: #fbbf24;
+
+  .achStatut[data-ton="info"] {
+    background: #26364d;
+    color: #8ab4f8;
+  }
+}

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" role="img" aria-label="Connecteur messagerie instantanée">
+  <path d="M13 0h22a13 13 0 0 1 13 13v22a13 13 0 0 1-13 13H4a4 4 0 0 1-4-4V13A13 13 0 0 1 13 0Z" fill="#0EA5E9"/>
+  <path d="M16 13h16a4 4 0 0 1 4 4v10a4 4 0 0 1-4 4h-8l-7 5v-5h-1a4 4 0 0 1-4-4V17a4 4 0 0 1 4-4Z" fill="#fff"/>
+  <g fill="#0EA5E9" opacity=".5">
+    <circle cx="19" cy="22" r="2"/><circle cx="24" cy="22" r="2"/><circle cx="29" cy="22" r="2"/>
+  </g>
+</svg>

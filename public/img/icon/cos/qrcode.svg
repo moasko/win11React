@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" role="img" aria-label="Générateur de QR Code">
+  <path d="M13 0h22a13 13 0 0 1 13 13v22a13 13 0 0 1-13 13H4a4 4 0 0 1-4-4V13A13 13 0 0 1 13 0Z" fill="#1E293B"/>
+  <g fill="#fff">
+    <rect x="12.5" y="12.5" width="9.5" height="9.5" rx="2.5"/>
+    <rect x="26" y="12.5" width="9.5" height="9.5" rx="2.5"/>
+    <rect x="12.5" y="26" width="9.5" height="9.5" rx="2.5"/>
+  </g>
+  <g fill="#1E293B">
+    <rect x="15.5" y="15.5" width="3.5" height="3.5" rx="1.2"/>
+    <rect x="29" y="15.5" width="3.5" height="3.5" rx="1.2"/>
+    <rect x="15.5" y="29" width="3.5" height="3.5" rx="1.2"/>
+  </g>
+  <g fill="#fff" opacity=".6">
+    <rect x="26" y="26" width="4" height="4" rx="1.2"/>
+    <rect x="31.5" y="31.5" width="4" height="4" rx="1.2"/>
+  </g>
+</svg>

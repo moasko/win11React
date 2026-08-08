@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" role="img" aria-label="Agenda">
+  <path d="M13 0h22a13 13 0 0 1 13 13v22a13 13 0 0 1-13 13H4a4 4 0 0 1-4-4V13A13 13 0 0 1 13 0Z" fill="#4338CA"/>
+  <g fill="#4338CA">
+    <rect x="16" y="8" width="3.4" height="8" rx="1.7"/>
+    <rect x="28.6" y="8" width="3.4" height="8" rx="1.7"/>
+  </g>
+  <rect x="10.5" y="12" width="27" height="26" rx="3.5" fill="#fff"/>
+  <path d="M10.5 19.5h27" stroke="#4338CA" stroke-width="1.6" opacity=".28"/>
+  <g fill="#4338CA" opacity=".45">
+    <rect x="14.5" y="23" width="4" height="4" rx="1.2"/>
+    <rect x="22" y="23" width="4" height="4" rx="1.2"/>
+    <rect x="29.5" y="23" width="4" height="4" rx="1.2"/>
+    <rect x="14.5" y="30" width="4" height="4" rx="1.2"/>
+  </g>
+  <rect x="22" y="30" width="4" height="4" rx="1.2" fill="#4338CA"/>
+</svg>

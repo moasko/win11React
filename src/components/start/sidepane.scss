@@ -3,13 +3,6 @@
   --bg2: #e6edf8;
   --bgHvr: rgb(0 0 0 / 5%);
 
-  &.bd-blur {
-    --bg1: rgba(242, 242, 242, 0.9);
-    --bg2: rgba(0, 0, 0, 0.05);
-    --bgHvr: rgba(0, 0, 0, 0.05);
-    backdrop-filter: blur(20px);
-  }
-
   position: absolute;
   bottom: 10px;
   right: 129px;
@@ -20,6 +13,13 @@
   z-index: 9999;
   border-radius: 8px;
   max-height: fit-content;
+
+  &.bd-blur {
+    --bg1: rgba(242, 242, 242, 0.9);
+    --bg2: rgba(0, 0, 0, 0.05);
+    --bgHvr: rgba(0, 0, 0, 0.05);
+    backdrop-filter: blur(20px);
+  }
 
   &[data-hide="true"] {
     opacity: 0;
@@ -205,13 +205,6 @@ body[data-theme="dark"] .sidePane {
   --bg2: #e6edf8;
   --bgHvr: rgb(0 0 0 / 5%);
 
-  &.bd-blur {
-    --bg1: rgba(242, 242, 242, 0.9);
-    --bg2: rgba(0, 0, 0, 0.05);
-    --bgHvr: rgba(0, 0, 0, 0.05);
-    backdrop-filter: blur(20px);
-  }
-
   position: absolute;
   bottom: 12px;
   right: 12px;
@@ -223,6 +216,13 @@ body[data-theme="dark"] .sidePane {
   z-index: 9999;
   border-radius: 8px;
   max-height: 500px;
+
+  &.bd-blur {
+    --bg1: rgba(242, 242, 242, 0.9);
+    --bg2: rgba(0, 0, 0, 0.05);
+    --bgHvr: rgba(0, 0, 0, 0.05);
+    backdrop-filter: blur(20px);
+  }
 
   &.collapse {
     max-height: 50px;

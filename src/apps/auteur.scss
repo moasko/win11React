@@ -1,0 +1,30 @@
+// Signature de fiche — voir Auteur.jsx.
+//
+// Volontairement discrète : c'est une information de contexte, pas une
+// donnée de la fiche. Elle se lit quand on la cherche, pas avant.
+//
+// Aucune variable de thème ici. Chaque module a les siennes — `--crm-muted`,
+// `--stk-muted`, `--fct-muted` — et ce composant est posé dans tous. Il
+// s'habille donc de la couleur du texte qui l'entoure, atténuée : correct
+// dans n'importe quel module, en clair comme en sombre, sans rien connaître
+// d'eux.
+
+.cosAuteur {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.7em;
+  line-height: 1.4;
+  color: inherit;
+  opacity: 0.62;
+  padding-top: 10px;
+  margin-top: 14px;
+  border-top: 1px solid currentColor;
+  // La bordure hériterait de l'opacité du bloc, ce qui la rendrait encore
+  // trop présente : on la ramène séparément à un trait de séparation.
+  border-top-color: color-mix(in srgb, currentColor 18%, transparent);
+
+  strong {
+    font-weight: 600;
+  }
+}

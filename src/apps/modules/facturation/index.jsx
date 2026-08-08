@@ -4,78 +4,95 @@ import { ModuleWindow } from "../../ModuleWindow";
 import { Icon } from "../../../utils/general";
 import { api } from "../../../api/client";
 import { saveAs } from "../../cloud";
-import { scrollSectionIntoView } from "../../scrollTo";
+import { modal } from "../../modalRequest";
+import { envoyerA } from "../../notifications";
+import { Auteur } from "../../Auteur";
+import { choisirClient, choisirProduit } from "../../referentiel";
+import { Contenu, useChargement } from "../../chargement";
 import { invoiceToPdf } from "./pdf";
+import {
+  DEVISES,
+  MOYENS,
+  STATUTS,
+  TYPES,
+  balanceAgee,
+  devisVersFacture,
+  encaisse,
+  etatPaiement,
+  joursDeRetard,
+  plusJours,
+  prochainNumero,
+  statistiques,
+  today,
+  totalLigne,
+  totaux,
+} from "./domaine";
 import "./facturation.scss";
 
-// Facturation : devis et factures, adossés aux clients du CRM.
-// Mise en page et charte reprises du générateur QR — voir src/apps/README.md.
+// Facturation : devis, factures, avoirs et règlements.
+//
+// Deux collections :
+//
+//   factures     tous les documents, quel que soit leur type. Le nom de la
+//                collection est resté « factures » : les documents déjà
+//                saisis y sont, et les renommer aurait coûté une migration
+//                pour rien. Le champ `type` distingue devis, facture, avoir.
+//   reglements   les encaissements, rattachés à un document.
+//
+// Clients et produits viennent du référentiel d'entreprise
+// (`src/apps/referentiel.js`) : un seul fichier client, un seul catalogue,
+// jamais de ressaisie.
 
-const SECTIONS = [
-  { id: "factures", label: "Factures", icon: "faFileInvoice" },
-  { id: "facture", label: "Facture", icon: "faPenToSquare" },
-  { id: "lignes", label: "Lignes", icon: "faListUl" },
-  { id: "analytics", label: "Analytics", icon: "faChartColumn" },
+const VUES = [
+  { id: "documents", label: "Documents", icone: "faFileInvoice" },
+  { id: "reglements", label: "Règlements", icone: "faMoneyBillTransfer" },
+  { id: "analyse", label: "Analyse", icone: "faChartColumn" },
 ];
 
-const STATUTS = [
-  { id: "brouillon", label: "Brouillon", tone: "idle" },
-  { id: "envoyee", label: "Envoyée", tone: "info" },
-  { id: "payee", label: "Payée", tone: "ok" },
-  { id: "annulee", label: "Annulée", tone: "off" },
+const FILTRES = [
+  { id: "tous", label: "Tous" },
+  { id: "devis", label: "Devis" },
+  { id: "facture", label: "Factures" },
+  { id: "avoir", label: "Avoirs" },
+  { id: "impaye", label: "À encaisser" },
+  { id: "retard", label: "En retard" },
 ];
 
-const DEVISES = ["XOF", "EUR", "USD"];
+const LIGNE_VIDE = { designation: "", qte: 1, pu: 0, remise: 0, tva: 18 };
 
-const today = () => new Date().toISOString().slice(0, 10);
+const nf = new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 2 });
+const money = (n, devise = "XOF") =>
+  `${nf.format(Math.round((Number(n) || 0) * 100) / 100)} ${devise}`;
 
-const plusDays = (days) => {
-  const d = new Date();
-  d.setDate(d.getDate() + days);
-  return d.toISOString().slice(0, 10);
-};
-
-const EMPTY_LIGNE = { designation: "", qte: 1, pu: 0, tva: 18 };
-
-const emptyFacture = () => ({
+const documentVide = (type = "facture") => ({
+  type,
   numero: "",
   clientId: "",
   clientNom: "",
   clientEntreprise: "",
   clientEmail: "",
   clientVille: "",
+  clientTelephone: "",
   date: today(),
-  echeance: plusDays(30),
+  echeance: plusJours(type === "devis" ? 15 : 30),
   devise: "XOF",
   statut: "brouillon",
+  remiseGlobale: 0,
   notes: "",
-  lignes: [{ ...EMPTY_LIGNE }],
+  conditions: "",
+  lignes: [{ ...LIGNE_VIDE }],
 });
 
-const nf = new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 2 });
-const money = (n, devise = "XOF") => `${nf.format(Math.round((Number(n) || 0) * 100) / 100)} ${devise}`;
-
-/// Totaux d'une facture. La TVA est portée par chaque ligne : un même
-/// document peut mélanger des taux (prestation, marchandise, exonéré).
-const computeTotals = (lignes = []) => {
-  let ht = 0;
-  let tva = 0;
-  for (const l of lignes) {
-    const ligneHt = (Number(l.qte) || 0) * (Number(l.pu) || 0);
-    ht += ligneHt;
-    tva += (ligneHt * (Number(l.tva) || 0)) / 100;
-  }
-  return { ht, tva, ttc: ht + tva };
-};
-
-const isLate = (f) =>
-  f.statut !== "payee" &&
-  f.statut !== "annulee" &&
-  f.echeance &&
-  f.echeance < today();
-
 export const manifest = {
+  id: "facturation",
   slug: "facturation",
+  version: "2.0.0",
+  /// Annoncé dans la Boutique quand une mise à jour est disponible.
+  /// Seules les entrées postérieures à la version installée sont montrées.
+  nouveautes: [
+    { version: "2.0.0", texte: "Devis, avoirs et règlements. L'état de paiement se déduit désormais des encaissements." },
+    { version: "1.1.0", texte: "Choix des produits dans le catalogue partagé." },
+  ],
   name: "Facturation",
   icon: "msoffice",
   action: "FACTURATIONAPP",
@@ -83,175 +100,227 @@ export const manifest = {
 };
 
 function FacturationApp() {
-  const wnapp = useSelector((state) => state.apps[manifest.icon]);
+  const wnapp = useSelector((state) => state.apps[manifest.id || manifest.icon]);
   const session = useSelector((state) => state.session);
 
-  const [section, setSection] = useState("factures");
-  const [factures, setFactures] = useState([]);
-  const [clients, setClients] = useState([]);
-  const [articles, setArticles] = useState([]);
+  const [documents, setDocuments] = useState([]);
+  const [reglements, setReglements] = useState([]);
+  const [membres, setMembres] = useState([]);
+
+  const [vue, setVue] = useState("documents");
+  const [filtre, setFiltre] = useState("tous");
+  const [requete, setRequete] = useState("");
+
   const [selectedId, setSelectedId] = useState(null);
   const [draft, setDraft] = useState(null);
-  const [query, setQuery] = useState("");
-  const [filter, setFilter] = useState("toutes");
+  const [onglet, setOnglet] = useState("document");
+  const [encaissement, setEncaissement] = useState({
+    montant: "",
+    moyen: MOYENS[0],
+    date: today(),
+    reference: "",
+  });
+
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
-
-  const mainRef = React.useRef(null);
-  const sectionRefs = React.useRef({});
-  const registerSection = (id) => (el) => {
-    sectionRefs.current[id] = el;
-  };
 
   const flash = (msg) => {
     setNotice(msg);
     setTimeout(() => setNotice(""), 3500);
   };
 
-  const load = async () => {
-    try {
-      // Clients et articles viennent des autres modules : un seul
-      // référentiel pour tout l'OS, jamais de saisie en double.
-      const [f, c, a] = await Promise.all([
-        api.records.list(manifest.slug, "factures"),
-        api.records.list("crm", "clients").catch(() => []),
-        api.records.list("stock", "articles").catch(() => []),
-      ]);
-      setFactures(f);
-      setClients(c);
-      setArticles(a);
-    } catch (err) {
-      flash(err.message);
-    }
+  const ouvert = wnapp && !wnapp.hide && session.status === "authenticated";
+
+  // ---- Chargement ---------------------------------------------------------
+
+  const charger = async () => {
+    const [docs, regs, gens] = await Promise.all([
+      api.records.list(manifest.slug, "factures"),
+      api.records.list(manifest.slug, "reglements").catch(() => []),
+      api.members().catch(() => []),
+    ]);
+    // Les documents saisis avant l'arrivée des devis n'ont pas de `type` :
+    // ce sont des factures. On le pose à la lecture plutôt que de migrer
+    // la base — une valeur par défaut vaut mieux qu'un script à rejouer.
+    setDocuments(
+      docs.map((d) => ({ ...d, data: { type: "facture", ...d.data } })),
+    );
+    setReglements(regs);
+    setMembres(gens);
   };
+
+  const etat = useChargement(ouvert, charger);
+
+  // ---- Arrivée depuis une notification ------------------------------------
+
+  const lienEnAttente = React.useRef(null);
 
   useEffect(() => {
-    if (wnapp && !wnapp.hide && session.status === "authenticated") load();
-  }, [wnapp?.hide, session.status]);
+    const aller = (e) => {
+      if (e.detail?.app !== manifest.id) return;
+      lienEnAttente.current = e.detail.params?.facture || null;
+      appliquerLien();
+    };
+    window.addEventListener("companyos:lien", aller);
+    return () => window.removeEventListener("companyos:lien", aller);
+  }, [documents]);
 
-  const goToSection = (id) => {
-    setSection(id);
-    scrollSectionIntoView(mainRef.current, sectionRefs.current[id]);
+  const appliquerLien = () => {
+    const vise = lienEnAttente.current;
+    if (!vise) return;
+    const doc = documents.find((d) => d.id === vise);
+    if (!doc) return; // pas encore chargé : on retentera après `charger()`
+    lienEnAttente.current = null;
+    setVue("documents");
+    ouvrirDocument(doc);
   };
 
-  /// Numérotation continue par année : 2026-001, 2026-002…
-  const nextNumero = () => {
-    const year = new Date().getFullYear();
-    const used = factures
-      .map((f) => f.data.numero)
-      .filter((n) => n && n.startsWith(`${year}-`))
-      .map((n) => parseInt(n.slice(5), 10))
-      .filter((n) => !Number.isNaN(n));
-    const next = (used.length ? Math.max(...used) : 0) + 1;
-    return `${year}-${String(next).padStart(3, "0")}`;
-  };
+  useEffect(appliquerLien, [documents]);
 
-  const openNew = () => {
-    setSelectedId(null);
-    setDraft({ ...emptyFacture(), numero: nextNumero() });
-    goToSection("facture");
-  };
+  // ---- Dérivés ------------------------------------------------------------
 
-  const openFacture = (record) => {
+  const selected = documents.find((d) => d.id === selectedId) || null;
+  const totals = useMemo(() => totaux(draft || {}), [draft]);
+  const stats = useMemo(
+    () => statistiques(documents, reglements),
+    [documents, reglements],
+  );
+
+  const reglementsDoc = useMemo(
+    () =>
+      reglements
+        .filter((r) => r.data.documentId === selectedId)
+        .sort((a, b) => (a.data.date < b.data.date ? 1 : -1)),
+    [reglements, selectedId],
+  );
+
+  const visibles = useMemo(() => {
+    const q = requete.trim().toLowerCase();
+    return documents
+      .filter((d) => {
+        if (["devis", "facture", "avoir"].includes(filtre) && d.data.type !== filtre)
+          return false;
+        if (filtre === "impaye" || filtre === "retard") {
+          const e = etatPaiement(d, reglements);
+          if (filtre === "retard" && e.id !== "retard") return false;
+          if (filtre === "impaye" && !["impayee", "partielle", "retard"].includes(e.id))
+            return false;
+        }
+        if (!q) return true;
+        return [d.data.numero, d.data.clientEntreprise, d.data.clientNom]
+          .filter(Boolean)
+          .some((v) => String(v).toLowerCase().includes(q));
+      })
+      .sort((a, b) => (a.data.date < b.data.date ? 1 : -1));
+  }, [documents, reglements, filtre, requete]);
+
+  // ---- Documents ----------------------------------------------------------
+
+  const ouvrirDocument = (record) => {
     setSelectedId(record.id);
-    setDraft({ ...emptyFacture(), ...record.data });
+    setDraft({ ...documentVide(record.data.type), ...record.data });
+    setOnglet("document");
   };
 
-  // Mise à jour fonctionnelle : plusieurs champs peuvent changer avant le
-  // rendu suivant, partir de `draft` capturé écraserait les précédents.
-  const setField = (key) => (e) => {
-    const value = e.target.value;
-    setDraft((d) => ({ ...d, [key]: value }));
+  const nouveauDocument = (type) => {
+    setSelectedId(null);
+    setDraft({ ...documentVide(type), numero: prochainNumero(documents, type) });
+    setOnglet("document");
   };
 
-  const pickClient = (e) => {
-    const id = e.target.value;
-    const client = clients.find((c) => c.id === id);
+  const champ = (cle) => (e) => {
+    const brut = e.target.value;
+    const valeur = cle === "remiseGlobale" ? Number(brut) || 0 : brut;
+    setDraft((d) => ({ ...d, [cle]: valeur }));
+  };
+
+  const setLigne = (index, cle) => (e) => {
+    const brut = e.target.value;
+    const valeur = cle === "designation" ? brut : Number(brut) || 0;
     setDraft((d) => ({
       ...d,
-      clientId: id,
-      clientNom: client?.data.nom || "",
-      clientEntreprise: client?.data.entreprise || "",
-      clientEmail: client?.data.email || "",
-      clientVille: client?.data.ville || "",
+      lignes: d.lignes.map((l, i) => (i === index ? { ...l, [cle]: valeur } : l)),
     }));
   };
 
-  const setLigne = (index, key) => (e) => {
-    const raw = e.target.value;
-    const value = key === "designation" ? raw : raw === "" ? "" : Number(raw);
+  const ajouterLigne = () =>
+    setDraft((d) => ({ ...d, lignes: [...d.lignes, { ...LIGNE_VIDE }] }));
+
+  const retirerLigne = (index) =>
     setDraft((d) => ({
       ...d,
-      lignes: d.lignes.map((l, i) => (i === index ? { ...l, [key]: value } : l)),
+      // On garde toujours une ligne : un document sans aucune ligne
+      // n'offrirait plus nulle part où saisir.
+      lignes: d.lignes.length > 1 ? d.lignes.filter((_, i) => i !== index) : d.lignes,
     }));
-  };
 
-  const addLigne = () =>
-    setDraft((d) => ({ ...d, lignes: [...d.lignes, { ...EMPTY_LIGNE }] }));
-
-  /// Reprend un article du Stock : désignation et prix de vente sont
-  /// recopiés dans la ligne, plus de ressaisie ni d'écart de tarif.
-  const pickArticle = (index) => (e) => {
-    const id = e.target.value;
-    if (!id) return;
-    const article = articles.find((a) => a.id === id);
-    if (!article) return;
+  /// Reprend un produit du catalogue d'entreprise : désignation, prix et
+  /// taux de TVA sont recopiés, plus de ressaisie ni d'écart de tarif.
+  const prendreProduit = async (index) => {
+    const produit = await choisirProduit({ titre: "Ajouter un produit" });
+    if (!produit) return;
     setDraft((d) => ({
       ...d,
       lignes: d.lignes.map((l, i) =>
         i === index
           ? {
               ...l,
-              articleId: id,
-              designation: article.data.designation,
-              pu: Number(article.data.prixVente) || 0,
+              articleId: produit.id,
+              designation: produit.data.designation,
+              pu: Number(produit.data.prixVente) || 0,
+              tva: Number(produit.data.tva ?? l.tva) || 0,
             }
           : l,
       ),
     }));
   };
 
-  const removeLigne = (index) =>
+  /// Reprend un client du fichier d'entreprise. Les coordonnées sont
+  /// **recopiées** dans le document : une facture émise doit rester
+  /// identique même si le client déménage l'année suivante.
+  const prendreClient = async () => {
+    const client = await choisirClient({ titre: "Choisir le client" });
+    if (!client) return;
     setDraft((d) => ({
       ...d,
-      lignes: d.lignes.length > 1 ? d.lignes.filter((_, i) => i !== index) : d.lignes,
+      clientId: client.id,
+      clientNom: client.data.nom || "",
+      clientEntreprise: client.data.entreprise || "",
+      clientEmail: client.data.email || "",
+      clientVille: client.data.ville || "",
+      clientTelephone: client.data.telephone || "",
     }));
+  };
 
-  const totals = useMemo(() => computeTotals(draft?.lignes), [draft?.lignes]);
-
-  const saveFacture = async () => {
-    if (!draft.clientId) {
+  const enregistrerDocument = async () => {
+    if (!draft) return;
+    if (!draft.clientEntreprise && !draft.clientNom) {
       flash("Choisissez un client");
-      goToSection("facture");
       return;
     }
-    if (!draft.lignes.some((l) => l.designation.trim())) {
-      flash("Ajoutez au moins une ligne");
-      goToSection("lignes");
+    // Un numéro en double rend la comptabilité inexploitable : on le
+    // refuse à la saisie plutôt que de le découvrir au contrôle fiscal.
+    if (
+      documents.some(
+        (d) => d.id !== selectedId && d.data.numero === draft.numero.trim(),
+      )
+    ) {
+      flash(`Le numéro « ${draft.numero} » est déjà utilisé`);
       return;
     }
-    // Deux brouillons ouverts en même temps reçoivent le même numéro :
-    // on refuse le doublon plutôt que de laisser deux factures homonymes
-    // partir en comptabilité.
-    const duplicate = factures.find(
-      (f) => f.id !== selectedId && f.data.numero === draft.numero.trim(),
-    );
-    if (duplicate) {
-      flash(`Le numéro ${draft.numero} est déjà utilisé — essayez ${nextNumero()}`);
-      goToSection("facture");
-      return;
-    }
+
     setBusy(true);
     try {
+      const donnees = { ...draft, numero: draft.numero.trim() };
       if (selectedId) {
-        await api.records.update(manifest.slug, "factures", selectedId, draft);
-        flash(`Facture ${draft.numero} mise à jour`);
+        await api.records.update(manifest.slug, "factures", selectedId, donnees);
+        flash("Document enregistré");
       } else {
-        const created = await api.records.create(manifest.slug, "factures", draft);
-        setSelectedId(created.id);
-        flash(`Facture ${draft.numero} créée`);
+        const cree = await api.records.create(manifest.slug, "factures", donnees);
+        setSelectedId(cree.id);
+        flash(`${TYPES[draft.type].label} créé${draft.type === "facture" ? "e" : ""}`);
       }
-      await load();
+      await etat.rafraichir();
     } catch (err) {
       flash(err.message);
     } finally {
@@ -259,48 +328,188 @@ function FacturationApp() {
     }
   };
 
-  const deleteFacture = async () => {
+  const supprimerDocument = async () => {
     if (!selectedId) return;
-    if (!window.confirm(`Supprimer la facture ${draft.numero} ?`)) return;
+    const paiements = reglementsDoc.length;
+
+    const ok = await modal.confirm({
+      title: "Supprimer le document",
+      message: `Supprimer ${TYPES[draft.type].label.toLowerCase()} ${draft.numero} ?`,
+      detail:
+        draft.statut !== "brouillon"
+          ? "Ce document a été émis. Une comptabilité n'efface pas une pièce émise : préférez un avoir, qui garde la trace de l'annulation."
+          : paiements
+            ? `Ses ${paiements} règlement${paiements > 1 ? "s" : ""} partiront avec lui.`
+            : undefined,
+      confirmLabel: "Supprimer",
+      danger: true,
+    });
+    if (!ok) return;
+
+    setBusy(true);
     try {
+      for (const r of reglementsDoc) {
+        await api.records.remove(manifest.slug, "reglements", r.id);
+      }
       await api.records.remove(manifest.slug, "factures", selectedId);
       setSelectedId(null);
       setDraft(null);
-      await load();
-      flash("Facture supprimée");
+      await etat.rafraichir();
+      flash("Document supprimé");
     } catch (err) {
       flash(err.message);
+    } finally {
+      setBusy(false);
     }
   };
 
-  const markPaid = async () => {
+  /// Change l'état décidé par l'utilisateur. L'état de paiement, lui, ne se
+  /// pose jamais à la main : il se déduit des règlements.
+  const changerStatut = async (statut) => {
     if (!selectedId) return;
-    const updated = { ...draft, statut: "payee" };
-    setDraft(updated);
     try {
-      await api.records.update(manifest.slug, "factures", selectedId, updated);
-      await load();
-      flash("Facture marquée payée");
+      const donnees = { ...draft, statut };
+      setDraft(donnees);
+      await api.records.update(manifest.slug, "factures", selectedId, donnees);
+      await etat.rafraichir();
     } catch (err) {
       flash(err.message);
     }
   };
 
-  /// Le PDF part dans le cloud : l'utilisateur choisit son emplacement.
-  const exportPdf = async () => {
+  /// Transforme un devis accepté en facture. Le devis reste intact : c'est
+  /// une pièce du dossier client, pas un brouillon.
+  const convertirEnFacture = async () => {
+    if (!selected || selected.data.type !== "devis") return;
+
+    const ok = await modal.confirm({
+      title: "Convertir en facture",
+      message: `Créer une facture à partir du devis ${draft.numero} ?`,
+      detail: "Le devis est conservé tel quel et reste consultable.",
+      confirmLabel: "Convertir",
+    });
+    if (!ok) return;
+
+    setBusy(true);
+    try {
+      const numero = prochainNumero(documents, "facture");
+      const cree = await api.records.create(
+        manifest.slug,
+        "factures",
+        devisVersFacture(selected, numero),
+      );
+      await api.records.update(manifest.slug, "factures", selected.id, {
+        ...draft,
+        statut: "accepte",
+      });
+      await etat.rafraichir();
+      setSelectedId(cree.id);
+      setDraft({ ...documentVide("facture"), ...cree.data });
+      setFiltre("tous");
+      flash(`Facture ${numero} créée`);
+    } catch (err) {
+      flash(err.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  // ---- Règlements ---------------------------------------------------------
+
+  const ajouterReglement = async () => {
+    if (!selectedId) return;
+    const montant = Number(encaissement.montant);
+    if (!Number.isFinite(montant) || montant <= 0) {
+      flash("Indiquez un montant positif");
+      return;
+    }
+
+    const etatAvant = etatPaiement(selected, reglements);
+    const reste = etatAvant.reste ?? totals.ttc;
+    if (montant > reste + 0.01) {
+      const ok = await modal.confirm({
+        title: "Montant supérieur au reste dû",
+        message: `Le reste dû est de ${money(reste, draft.devise)}.`,
+        detail: "Enregistrer davantage créera un trop-perçu à régulariser par un avoir.",
+        confirmLabel: "Enregistrer quand même",
+      });
+      if (!ok) return;
+    }
+
+    setBusy(true);
+    try {
+      await api.records.create(manifest.slug, "reglements", {
+        documentId: selectedId,
+        montant,
+        moyen: encaissement.moyen,
+        date: encaissement.date || today(),
+        reference: encaissement.reference.trim(),
+      });
+      prevenirSiSolde(montant, reste);
+      setEncaissement({ montant: "", moyen: MOYENS[0], date: today(), reference: "" });
+      await etat.rafraichir();
+      flash("Règlement enregistré");
+    } catch (err) {
+      flash(err.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const supprimerReglement = async (r) => {
+    const ok = await modal.confirm({
+      title: "Supprimer le règlement",
+      message: `${money(r.data.montant, draft.devise)} du ${r.data.date} ?`,
+      detail: "Le reste dû sera recalculé sans lui.",
+      confirmLabel: "Supprimer",
+      danger: true,
+    });
+    if (!ok) return;
+    try {
+      await api.records.remove(manifest.slug, "reglements", r.id);
+      await etat.rafraichir();
+    } catch (err) {
+      flash(err.message);
+    }
+  };
+
+  /// Prévient l'émetteur quand un règlement solde **sa** facture.
+  ///
+  /// Au solde seulement : un acompte sur trois n'intéresse que la caisse,
+  /// et une notification par encaissement rendrait les autres illisibles.
+  const prevenirSiSolde = (montant, resteAvant) => {
+    if (montant < resteAvant - 0.01) return;
+    const emetteur = selected?.auteur;
+    if (!emetteur || emetteur.id === session.user?.id) return;
+
+    envoyerA(emetteur.id, {
+      source: manifest.slug,
+      titre: `${draft.numero} soldée`,
+      message: [draft.clientEntreprise || draft.clientNom, money(totals.ttc, draft.devise)]
+        .filter(Boolean)
+        .join(" · "),
+      lien: { app: manifest.id, params: { facture: selectedId } },
+    });
+  };
+
+  // ---- Export -------------------------------------------------------------
+
+  const exporterPdf = async () => {
     if (!draft || busy) return;
     setBusy(true);
     try {
+      const e = etatPaiement({ id: selectedId, data: draft }, reglements);
       const blob = invoiceToPdf({
         facture: draft,
-        totaux: computeTotals(draft.lignes),
+        totaux: totals,
+        typeLabel: TYPES[draft.type].label,
         emetteur: { nom: session.tenant?.name || "CompanyOS" },
         statutLabel:
-          STATUTS.find((s) => s.id === draft.statut)?.label || draft.statut,
+          draft.type === "devis"
+            ? STATUTS[draft.statut]?.label || draft.statut
+            : e.label,
       });
-      const node = await saveAs(blob, `facture-${draft.numero}.pdf`, {
-        folder: manifest.name,
-      });
+      const node = await saveAs(blob, `${draft.numero}.pdf`, { folder: "Facturation" });
       if (node) flash(`« ${node.name} » enregistré dans l'Explorateur`);
     } catch (err) {
       flash(err.message);
@@ -309,477 +518,830 @@ function FacturationApp() {
     }
   };
 
-  const visible = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    return factures.filter((f) => {
-      const d = f.data;
-      if (filter === "retard" && !isLate(d)) return false;
-      if (filter !== "toutes" && filter !== "retard" && d.statut !== filter) return false;
-      if (!q) return true;
-      return [d.numero, d.clientNom, d.clientEntreprise]
-        .filter(Boolean)
-        .some((v) => v.toLowerCase().includes(q));
-    });
-  }, [factures, query, filter]);
+  const exporterCsv = async () => {
+    const lignes = [
+      ["Type", "Numéro", "Date", "Échéance", "Client", "HT", "TVA", "TTC", "Encaissé", "Reste", "État"],
+      ...visibles.map((d) => {
+        const t = totaux(d.data);
+        const e = etatPaiement(d, reglements);
+        return [
+          TYPES[d.data.type]?.label || d.data.type,
+          d.data.numero,
+          d.data.date,
+          d.data.echeance,
+          d.data.clientEntreprise || d.data.clientNom,
+          Math.round(t.ht),
+          Math.round(t.tva),
+          Math.round(t.ttc),
+          Math.round(encaisse(d.id, reglements)),
+          Math.round(e.reste ?? 0),
+          e.label,
+        ];
+      }),
+    ];
 
-  const totauxGlobaux = useMemo(() => {
-    let facture = 0;
-    let encaisse = 0;
-    let attente = 0;
-    let retard = 0;
-    factures.forEach((f) => {
-      const { ttc } = computeTotals(f.data.lignes);
-      if (f.data.statut === "annulee") return;
-      facture += ttc;
-      if (f.data.statut === "payee") encaisse += ttc;
-      else {
-        attente += ttc;
-        if (isLate(f.data)) retard += ttc;
-      }
-    });
-    return { facture, encaisse, attente, retard };
-  }, [factures]);
+    // BOM UTF-8 et point-virgule : sans les deux, Excel en configuration
+    // française ouvre le fichier en une seule colonne, accents cassés.
+    const csv =
+      "﻿" +
+      lignes
+        .map((l) => l.map((v) => `"${String(v ?? "").replace(/"/g, '""')}"`).join(";"))
+        .join("\r\n");
 
-  const parStatut = STATUTS.map((s) => {
-    const list = factures.filter((f) => f.data.statut === s.id);
-    return {
-      ...s,
-      count: list.length,
-      montant: list.reduce((sum, f) => sum + computeTotals(f.data.lignes).ttc, 0),
-    };
-  });
-  const maxStatut = Math.max(1, ...parStatut.map((s) => s.montant));
-
-  const statusOf = (d) => {
-    if (isLate(d)) return { label: "En retard", tone: "late" };
-    return STATUTS.find((s) => s.id === d.statut) || STATUTS[0];
+    const node = await saveAs(
+      new Blob([csv], { type: "text/csv;charset=utf-8" }),
+      "journal-des-ventes.csv",
+      { folder: "Facturation" },
+    );
+    if (node) flash(`« ${node.name} » enregistré dans l'Explorateur`);
   };
 
-  const devise = draft?.devise || "XOF";
+  // ---- Rendu --------------------------------------------------------------
+
+  const etatDoc = selected ? etatPaiement(selected, reglements) : null;
+  const paye = selectedId ? encaisse(selectedId, reglements) : 0;
 
   return (
-    <ModuleWindow manifest={manifest} className="factApp">
+    <ModuleWindow manifest={manifest} className="fctApp">
       {session.status !== "authenticated" ? (
-        <div className="fctLocked">Connectez-vous pour accéder à la facturation.</div>
+        <div className="fctLocked">
+          <Icon fafa="faLock" width={22} />
+          <span>Connectez-vous pour accéder à la facturation.</span>
+        </div>
       ) : (
         <div className="fctShell">
-          {/* Navigation latérale */}
-          <aside className="fctNav">
-            {SECTIONS.map((s) => (
+          {/* ---------- Barre latérale ---------- */}
+          <aside className="fctNav win11Scroll">
+            {VUES.map((v) => (
               <div
-                key={s.id}
+                key={v.id}
                 className="fctNavItem handcr"
-                data-active={section === s.id}
-                onClick={() => goToSection(s.id)}
+                data-actif={vue === v.id}
+                onClick={() => setVue(v.id)}
               >
-                <Icon fafa={s.icon} width={13} />
-                <span>{s.label}</span>
+                <Icon fafa={v.icone} width={13} />
+                <span>{v.label}</span>
               </div>
             ))}
-          </aside>
 
-          {/* Colonne centrale */}
-          <div className="fctMain win11Scroll" ref={mainRef}>
-            <section ref={registerSection("factures")} className="fctSection">
-              <h2>
-                <span className="fctNum">1.</span> Factures
-              </h2>
-              <p className="fctHint">
-                Documents émis par {session.tenant?.name}
-              </p>
-
-              <div className="fctField">
-                <input
-                  type="text"
-                  placeholder="Rechercher par numéro ou client…"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                />
-              </div>
-
-              <div className="fctChips">
-                <div
-                  className="fctChip handcr"
-                  data-active={filter === "toutes"}
-                  onClick={() => setFilter("toutes")}
-                >
-                  Toutes ({factures.length})
-                </div>
-                {STATUTS.map((s) => (
+            {vue === "documents" ? (
+              <>
+                <div className="fctNavTitre">Filtrer</div>
+                {FILTRES.map((f) => (
                   <div
-                    key={s.id}
-                    className="fctChip handcr"
-                    data-active={filter === s.id}
-                    onClick={() => setFilter(s.id)}
+                    key={f.id}
+                    className="fctFiltre handcr"
+                    data-actif={filtre === f.id}
+                    onClick={() => setFiltre(f.id)}
                   >
-                    {s.label} ({factures.filter((f) => f.data.statut === s.id).length})
+                    <span>{f.label}</span>
+                    <span className="fctFiltreCompte">
+                      {
+                        documents.filter((d) => {
+                          if (["devis", "facture", "avoir"].includes(f.id))
+                            return d.data.type === f.id;
+                          if (f.id === "retard")
+                            return etatPaiement(d, reglements).id === "retard";
+                          if (f.id === "impaye")
+                            return ["impayee", "partielle", "retard"].includes(
+                              etatPaiement(d, reglements).id,
+                            );
+                          return true;
+                        }).length
+                      }
+                    </span>
                   </div>
                 ))}
-                <div
-                  className="fctChip handcr"
-                  data-active={filter === "retard"}
-                  onClick={() => setFilter("retard")}
-                >
-                  En retard ({factures.filter((f) => isLate(f.data)).length})
-                </div>
-              </div>
 
-              {visible.length === 0 ? (
-                <div className="fctEmptyBox">
-                  {factures.length === 0
-                    ? "Aucune facture. Créez la première depuis le panneau de droite."
-                    : "Aucun résultat pour ce filtre."}
+                <div className="fctNavTitre">Créer</div>
+                {Object.entries(TYPES).map(([id, t]) => (
+                  <div
+                    key={id}
+                    className="fctNavItem handcr"
+                    onClick={() => nouveauDocument(id)}
+                  >
+                    <Icon fafa={t.icone} width={12} />
+                    <span>Nouveau {t.label.toLowerCase()}</span>
+                  </div>
+                ))}
+              </>
+            ) : null}
+          </aside>
+
+          {/* ---------- Contenu ---------- */}
+          <main className="fctMain">
+            <div className="fctStats">
+              <div className="fctStat">
+                <span className="fctStatVal">{money(stats.facture)}</span>
+                <span className="fctStatLbl">facturé</span>
+              </div>
+              <div className="fctStat" data-ton="ok">
+                <span className="fctStatVal">{money(stats.encaisse)}</span>
+                <span className="fctStatLbl">encaissé</span>
+              </div>
+              <div
+                className="fctStat handcr"
+                data-ton="info"
+                onClick={() => {
+                  setVue("documents");
+                  setFiltre("impaye");
+                }}
+              >
+                <span className="fctStatVal">{money(stats.enAttente)}</span>
+                <span className="fctStatLbl">à encaisser</span>
+              </div>
+              <div
+                className="fctStat handcr"
+                data-ton="bad"
+                onClick={() => {
+                  setVue("documents");
+                  setFiltre("retard");
+                }}
+              >
+                <span className="fctStatVal">{money(stats.enRetard)}</span>
+                <span className="fctStatLbl">
+                  en retard{stats.nbRetard ? ` · ${stats.nbRetard}` : ""}
+                </span>
+              </div>
+            </div>
+
+            {vue === "documents" ? (
+              <>
+                <div className="fctBarre">
+                  <div className="fctRecherche">
+                    <Icon fafa="faMagnifyingGlass" width={11} />
+                    <input
+                      type="text"
+                      placeholder="Numéro ou client…"
+                      value={requete}
+                      onChange={(e) => setRequete(e.target.value)}
+                    />
+                    {requete ? (
+                      <Icon fafa="faXmark" width={10} onClick={() => setRequete("")} />
+                    ) : null}
+                  </div>
+                  <div
+                    className="fctPrimary handcr"
+                    onClick={() => nouveauDocument("facture")}
+                  >
+                    <Icon fafa="faPlus" width={10} />
+                    <span>Nouvelle facture</span>
+                  </div>
+                  <div className="fctBtnGhost handcr" onClick={exporterCsv}>
+                    Export
+                  </div>
+                </div>
+
+                {etat.initial || etat.erreur ? (
+                  <Contenu etat={etat} vide={false} lignes={7} />
+                ) : !visibles.length ? (
+                  <div className="fctVide">
+                    <Icon fafa="faFileInvoice" width={26} />
+                    <span>
+                      {documents.length
+                        ? "Aucun document pour ce filtre."
+                        : "Aucun document émis."}
+                    </span>
+                    {!documents.length ? (
+                      <div
+                        className="fctPrimary handcr"
+                        onClick={() => nouveauDocument("facture")}
+                      >
+                        Créer la première facture
+                      </div>
+                    ) : null}
+                  </div>
+                ) : (
+                  <div className="fctTable win11Scroll">
+                    <div className="fctTr fctTrDoc fctTh">
+                      <span>Numéro</span>
+                      <span>Client</span>
+                      <span>Date</span>
+                      <span>Échéance</span>
+                      <span className="fctNum">Total TTC</span>
+                      <span className="fctNum">Reste</span>
+                      <span>État</span>
+                    </div>
+                    {visibles.map((d) => {
+                      const t = totaux(d.data);
+                      const e = etatPaiement(d, reglements);
+                      const retard = joursDeRetard(d);
+                      return (
+                        <div
+                          key={d.id}
+                          className="fctTr fctTrDoc handcr"
+                          data-actif={d.id === selectedId}
+                          onClick={() => ouvrirDocument(d)}
+                        >
+                          <span className="fctNumero">
+                            <strong>{d.data.numero}</strong>
+                            <em>{TYPES[d.data.type]?.label}</em>
+                          </span>
+                          <span className="fctMuted">
+                            {d.data.clientEntreprise || d.data.clientNom || "—"}
+                          </span>
+                          <span className="fctMuted">{d.data.date}</span>
+                          <span className="fctMuted">
+                            {d.data.echeance}
+                            {retard && e.id === "retard" ? (
+                              <em className="fctRetard"> +{retard} j</em>
+                            ) : null}
+                          </span>
+                          <span className="fctNum">
+                            {d.data.type === "avoir" ? "−" : ""}
+                            {money(t.ttc, d.data.devise)}
+                          </span>
+                          <span className="fctNum fctMuted">
+                            {e.reste ? money(e.reste, d.data.devise) : "—"}
+                          </span>
+                          <span>
+                            <span className="fctTag" data-ton={e.ton}>
+                              {e.label}
+                            </span>
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </>
+            ) : null}
+
+            {vue === "reglements" ? (
+              !reglements.length ? (
+                <div className="fctVide">
+                  <Icon fafa="faMoneyBillTransfer" width={24} />
+                  <span>Aucun règlement enregistré.</span>
                 </div>
               ) : (
-                <div className="fctList">
-                  {visible.map((f) => {
-                    const status = statusOf(f.data);
-                    const { ttc } = computeTotals(f.data.lignes);
+                <div className="fctTable win11Scroll">
+                  <div className="fctTr fctTrReg fctTh">
+                    <span>Date</span>
+                    <span>Document</span>
+                    <span>Client</span>
+                    <span>Moyen</span>
+                    <span>Référence</span>
+                    <span className="fctNum">Montant</span>
+                  </div>
+                  {[...reglements]
+                    .sort((a, b) => (a.data.date < b.data.date ? 1 : -1))
+                    .map((r) => {
+                      const doc = documents.find((d) => d.id === r.data.documentId);
+                      return (
+                        <div key={r.id} className="fctTr fctTrReg">
+                          <span className="fctMuted">{r.data.date}</span>
+                          <span
+                            className="fctLien handcr"
+                            onClick={() => {
+                              if (!doc) return;
+                              setVue("documents");
+                              ouvrirDocument(doc);
+                            }}
+                          >
+                            {doc?.data.numero || "document supprimé"}
+                          </span>
+                          <span className="fctMuted">
+                            {doc?.data.clientEntreprise || doc?.data.clientNom || "—"}
+                          </span>
+                          <span className="fctMuted">{r.data.moyen}</span>
+                          <span className="fctMuted">{r.data.reference || "—"}</span>
+                          <span className="fctNum">
+                            {money(r.data.montant, doc?.data.devise)}
+                          </span>
+                        </div>
+                      );
+                    })}
+                </div>
+              )
+            ) : null}
+
+            {vue === "analyse" ? (
+              <div className="fctAnalyse win11Scroll">
+                <div className="fctSousTitre">Balance âgée des impayés</div>
+                {(() => {
+                  const tranches = balanceAgee(documents, reglements);
+                  const max = Math.max(1, ...tranches.map((t) => t.montant));
+                  if (!tranches.some((t) => t.montant))
                     return (
-                      <div
-                        key={f.id}
-                        className="fctRow handcr"
-                        data-active={f.id === selectedId}
-                        onClick={() => openFacture(f)}
-                      >
-                        <div className="fctRowNum">{f.data.numero}</div>
-                        <div className="fctRowInfo">
-                          <div className="fctRowName">
-                            {f.data.clientEntreprise || f.data.clientNom || "—"}
-                          </div>
-                          <div className="fctRowMeta">
-                            Échéance {f.data.echeance || "—"}
-                          </div>
-                        </div>
-                        <div className="fctRowTotal">{money(ttc, f.data.devise)}</div>
-                        <div className="fctTag" data-tone={status.tone}>
-                          {status.label}
-                        </div>
+                      <div className="fctEmptyBox">
+                        Aucun impayé. Rien à relancer aujourd'hui.
                       </div>
                     );
-                  })}
+                  return tranches.map((t) => (
+                    <div key={t.id} className="fctJauge">
+                      <span className="fctJaugeNom">{t.label}</span>
+                      <span className="fctJaugeFond">
+                        <span
+                          className="fctJaugeVal"
+                          data-alerte={t.id === "j90" || t.id === "plus"}
+                          style={{ width: `${(t.montant / max) * 100}%` }}
+                        />
+                      </span>
+                      <span className="fctJaugeChiffre">{money(t.montant)}</span>
+                    </div>
+                  ));
+                })()}
+
+                <div className="fctSousTitre">Premiers clients</div>
+                {(() => {
+                  const parClient = new Map();
+                  for (const d of documents) {
+                    if (d.data.type === "devis" || d.data.statut === "brouillon") continue;
+                    const cle = d.data.clientEntreprise || d.data.clientNom || "—";
+                    const signe = d.data.type === "avoir" ? -1 : 1;
+                    parClient.set(
+                      cle,
+                      (parClient.get(cle) || 0) + totaux(d.data).ttc * signe,
+                    );
+                  }
+                  const liste = [...parClient.entries()]
+                    .map(([nom, montant]) => ({ nom, montant }))
+                    .sort((a, b) => b.montant - a.montant)
+                    .slice(0, 8);
+
+                  if (!liste.length)
+                    return <div className="fctEmptyBox">Aucune vente enregistrée.</div>;
+
+                  const max = Math.max(1, ...liste.map((c) => c.montant));
+                  return liste.map((c) => (
+                    <div key={c.nom} className="fctJauge">
+                      <span className="fctJaugeNom">{c.nom}</span>
+                      <span className="fctJaugeFond">
+                        <span
+                          className="fctJaugeVal"
+                          style={{ width: `${(c.montant / max) * 100}%` }}
+                        />
+                      </span>
+                      <span className="fctJaugeChiffre">{money(c.montant)}</span>
+                    </div>
+                  ));
+                })()}
+
+                <div className="fctSousTitre">À relancer</div>
+                {(() => {
+                  const retard = documents
+                    .filter((d) => etatPaiement(d, reglements).id === "retard")
+                    .sort((a, b) => joursDeRetard(b) - joursDeRetard(a));
+                  if (!retard.length)
+                    return <div className="fctEmptyBox">Aucune facture en retard.</div>;
+                  return retard.map((d) => {
+                    const e = etatPaiement(d, reglements);
+                    return (
+                      <div
+                        key={d.id}
+                        className="fctRelance handcr"
+                        onClick={() => {
+                          setVue("documents");
+                          ouvrirDocument(d);
+                        }}
+                      >
+                        <span className="fctTag" data-ton="bad">
+                          +{joursDeRetard(d)} j
+                        </span>
+                        <span className="fctRelanceNom">
+                          {d.data.clientEntreprise || d.data.clientNom}
+                        </span>
+                        <span className="fctMuted">{d.data.numero}</span>
+                        <span className="fctNum">{money(e.reste, d.data.devise)}</span>
+                      </div>
+                    );
+                  });
+                })()}
+              </div>
+            ) : null}
+          </main>
+
+          {/* ---------- Panneau ---------- */}
+          <aside className="fctPanneau win11Scroll">
+            {!draft ? (
+              <div className="fctPanVide">
+                <Icon fafa="faHandPointer" width={20} />
+                <span>
+                  Sélectionnez un document, ou créez un devis, une facture ou un
+                  avoir.
+                </span>
+              </div>
+            ) : (
+              <>
+                <div className="fctPanTete">
+                  <div>
+                    <div className="fctPanNum">{draft.numero}</div>
+                    <div className="fctPanType">{TYPES[draft.type].label}</div>
+                  </div>
+                  {etatDoc ? (
+                    <span className="fctTag" data-ton={etatDoc.ton}>
+                      {etatDoc.label}
+                    </span>
+                  ) : null}
                 </div>
-              )}
-            </section>
 
-            <section ref={registerSection("facture")} className="fctSection">
-              <h2>
-                <span className="fctNum">2.</span> Facture
-              </h2>
-              <p className="fctHint">
-                {draft
-                  ? "Client, dates et conditions du document"
-                  : "Sélectionnez une facture, ou créez-en une"}
-              </p>
+                {selectedId && draft.type !== "devis" ? (
+                  <div className="fctSolde">
+                    <div>
+                      <span className="fctSoldeLbl">Encaissé</span>
+                      <strong>{money(paye, draft.devise)}</strong>
+                    </div>
+                    <div>
+                      <span className="fctSoldeLbl">Reste dû</span>
+                      <strong data-ton={etatDoc?.reste ? "bad" : "ok"}>
+                        {money(etatDoc?.reste ?? totals.ttc, draft.devise)}
+                      </strong>
+                    </div>
+                  </div>
+                ) : null}
 
-              {!draft ? (
-                <div className="fctEmptyBox">Aucune facture ouverte.</div>
-              ) : (
-                <>
-                  <div className="fctGrid">
+                <div className="fctOnglets">
+                  {[
+                    ["document", "Document"],
+                    ["lignes", "Lignes"],
+                    ["reglements", "Règlements"],
+                  ].map(([id, label]) => (
+                    <span
+                      key={id}
+                      className="handcr"
+                      data-actif={onglet === id}
+                      onClick={() => setOnglet(id)}
+                    >
+                      {label}
+                    </span>
+                  ))}
+                </div>
+
+                {onglet === "document" ? (
+                  <>
+                    <div className="fctClient">
+                      <div className="fctClientInfo">
+                        <div className="fctClientNom">
+                          {draft.clientEntreprise || draft.clientNom || "Aucun client"}
+                        </div>
+                        <div className="fctClientMeta">
+                          {[draft.clientEntreprise ? draft.clientNom : null, draft.clientVille, draft.clientEmail]
+                            .filter(Boolean)
+                            .join(" · ") || "Choisissez un client du fichier"}
+                        </div>
+                      </div>
+                      <div className="fctBtnGhost handcr" onClick={prendreClient}>
+                        {draft.clientId ? "Changer" : "Choisir"}
+                      </div>
+                    </div>
+
+                    <div className="fctDeux">
+                      <label className="fctField">
+                        <span className="fctLabel">Numéro</span>
+                        <input type="text" value={draft.numero} onChange={champ("numero")} />
+                      </label>
+                      <label className="fctField">
+                        <span className="fctLabel">Devise</span>
+                        <select value={draft.devise} onChange={champ("devise")}>
+                          {DEVISES.map((d) => (
+                            <option key={d} value={d}>
+                              {d}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    </div>
+
+                    <div className="fctDeux">
+                      <label className="fctField">
+                        <span className="fctLabel">Date</span>
+                        <input type="date" value={draft.date} onChange={champ("date")} />
+                      </label>
+                      <label className="fctField">
+                        <span className="fctLabel">Échéance</span>
+                        <input
+                          type="date"
+                          value={draft.echeance}
+                          onChange={champ("echeance")}
+                        />
+                      </label>
+                    </div>
+
+                    <div className="fctField">
+                      <span className="fctLabel">État</span>
+                      <div className="fctStatuts">
+                        {/* « Accepté » et « Refusé » n'ont de sens que pour
+                            un devis : une facture ne se refuse pas, elle
+                            s'annule ou se contre-passe par un avoir. */}
+                        {Object.entries(STATUTS)
+                          .filter(
+                            ([id]) =>
+                              draft.type === "devis" ||
+                              !["accepte", "refuse"].includes(id),
+                          )
+                          .map(([id, s]) => (
+                            <span
+                              key={id}
+                              className="handcr"
+                              data-actif={draft.statut === id}
+                              data-ton={s.ton}
+                              onClick={() => changerStatut(id)}
+                            >
+                              {s.label}
+                            </span>
+                          ))}
+                      </div>
+                    </div>
+
                     <label className="fctField">
-                      <span className="fctLabel">Numéro</span>
+                      <span className="fctLabel">Notes</span>
+                      <textarea rows={2} value={draft.notes} onChange={champ("notes")} />
+                    </label>
+
+                    <label className="fctField">
+                      <span className="fctLabel">Conditions de paiement</span>
                       <input
                         type="text"
-                        value={draft.numero}
-                        onChange={setField("numero")}
+                        placeholder="Paiement à 30 jours, Mobile Money accepté"
+                        value={draft.conditions}
+                        onChange={champ("conditions")}
                       />
                     </label>
-                    <label className="fctField">
-                      <span className="fctLabel">Client (depuis le CRM)</span>
-                      <select value={draft.clientId} onChange={pickClient}>
-                        <option value="">— Choisir un client —</option>
-                        {clients.map((c) => (
-                          <option key={c.id} value={c.id}>
-                            {c.data.entreprise || c.data.nom}
-                            {c.data.entreprise && c.data.nom ? ` — ${c.data.nom}` : ""}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                    <label className="fctField">
-                      <span className="fctLabel">Date d'émission</span>
-                      <input type="date" value={draft.date} onChange={setField("date")} />
-                    </label>
-                    <label className="fctField">
-                      <span className="fctLabel">Échéance</span>
-                      <input
-                        type="date"
-                        value={draft.echeance}
-                        onChange={setField("echeance")}
-                      />
-                    </label>
-                    <label className="fctField">
-                      <span className="fctLabel">Devise</span>
-                      <select value={draft.devise} onChange={setField("devise")}>
-                        {DEVISES.map((d) => (
-                          <option key={d} value={d}>
-                            {d}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                    <label className="fctField">
-                      <span className="fctLabel">Statut</span>
-                      <select value={draft.statut} onChange={setField("statut")}>
-                        {STATUTS.map((s) => (
-                          <option key={s.id} value={s.id}>
-                            {s.label}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                  </div>
 
-                  {clients.length === 0 ? (
-                    <div className="fctWarn">
-                      Aucun client dans le CRM. Créez-y une fiche : la facturation
-                      s'appuie sur le même référentiel.
+                    {selected ? <Auteur record={selected} /> : null}
+
+                    <div className="fctFormActions">
+                      <div
+                        className="fctPrimary handcr"
+                        data-off={busy}
+                        onClick={enregistrerDocument}
+                      >
+                        <Icon fafa="faFloppyDisk" width={11} />
+                        <span>{busy ? "…" : "Enregistrer"}</span>
+                      </div>
+                      <div className="fctBtnGhost handcr" onClick={exporterPdf}>
+                        PDF
+                      </div>
                     </div>
-                  ) : null}
 
-                  <label className="fctField">
-                    <span className="fctLabel">Notes / conditions de règlement</span>
-                    <textarea rows={2} value={draft.notes} onChange={setField("notes")} />
-                  </label>
-                </>
-              )}
-            </section>
+                    {selectedId ? (
+                      <div className="fctFormActions">
+                        {draft.type === "devis" ? (
+                          <div
+                            className="fctBtnGhost handcr"
+                            data-off={busy}
+                            onClick={convertirEnFacture}
+                          >
+                            Convertir en facture
+                          </div>
+                        ) : null}
+                        <div
+                          className="fctBtnGhost fctDanger handcr"
+                          onClick={supprimerDocument}
+                        >
+                          Supprimer
+                        </div>
+                      </div>
+                    ) : null}
 
-            <section ref={registerSection("lignes")} className="fctSection">
-              <h2>
-                <span className="fctNum">3.</span> Lignes
-              </h2>
-              <p className="fctHint">Prestations et marchandises facturées</p>
+                    {draft.sourceNumero ? (
+                      <div className="fctNote">
+                        Établie à partir du devis {draft.sourceNumero}.
+                      </div>
+                    ) : null}
+                  </>
+                ) : null}
 
-              {!draft ? (
-                <div className="fctEmptyBox">Ouvrez une facture pour saisir ses lignes.</div>
-              ) : (
-                <>
-                  <div className="fctTable">
-                    <div className="fctTHead">
-                      <div>Désignation</div>
-                      <div className="fctRight">Qté</div>
-                      <div className="fctRight">Prix unit.</div>
-                      <div className="fctRight">TVA %</div>
-                      <div className="fctRight">Total HT</div>
-                      <div />
-                    </div>
+                {onglet === "lignes" ? (
+                  <>
                     {draft.lignes.map((l, i) => (
-                      <div key={i} className="fctTRow">
-                        <div className="fctDesigCell">
+                      <div key={i} className="fctLigne">
+                        <div className="fctLigneTete">
                           <input
                             type="text"
                             placeholder="Désignation"
                             value={l.designation}
                             onChange={setLigne(i, "designation")}
                           />
-                          {articles.length ? (
-                            <select
-                              className="fctArticlePick"
-                              value=""
-                              onChange={pickArticle(i)}
-                              title="Reprendre un article du Stock"
-                            >
-                              <option value="">Article…</option>
-                              {articles.map((a) => (
-                                <option key={a.id} value={a.id}>
-                                  {a.data.reference
-                                    ? `${a.data.reference} — ${a.data.designation}`
-                                    : a.data.designation}
-                                </option>
-                              ))}
-                            </select>
-                          ) : null}
+                          <span
+                            className="fctIconBtn handcr"
+                            title="Choisir dans le catalogue"
+                            onClick={() => prendreProduit(i)}
+                          >
+                            <Icon fafa="faBoxesStacked" width={11} />
+                          </span>
+                          <span
+                            className="fctIconBtn handcr"
+                            title="Retirer la ligne"
+                            onClick={() => retirerLigne(i)}
+                          >
+                            <Icon fafa="faXmark" width={10} />
+                          </span>
                         </div>
-                        <input
-                          type="number"
-                          className="fctRight"
-                          value={l.qte}
-                          onChange={setLigne(i, "qte")}
-                        />
-                        <input
-                          type="number"
-                          className="fctRight"
-                          value={l.pu}
-                          onChange={setLigne(i, "pu")}
-                        />
-                        <input
-                          type="number"
-                          className="fctRight"
-                          value={l.tva}
-                          onChange={setLigne(i, "tva")}
-                        />
-                        <div className="fctCell fctRight">
-                          {money((Number(l.qte) || 0) * (Number(l.pu) || 0), devise)}
+                        <div className="fctQuatre">
+                          <label className="fctField">
+                            <span className="fctLabel">Qté</span>
+                            <input
+                              type="number"
+                              value={l.qte}
+                              onChange={setLigne(i, "qte")}
+                            />
+                          </label>
+                          <label className="fctField">
+                            <span className="fctLabel">P.U.</span>
+                            <input type="number" value={l.pu} onChange={setLigne(i, "pu")} />
+                          </label>
+                          <label className="fctField">
+                            <span className="fctLabel">Remise %</span>
+                            <input
+                              type="number"
+                              value={l.remise || 0}
+                              onChange={setLigne(i, "remise")}
+                            />
+                          </label>
+                          <label className="fctField">
+                            <span className="fctLabel">TVA %</span>
+                            <input
+                              type="number"
+                              value={l.tva}
+                              onChange={setLigne(i, "tva")}
+                            />
+                          </label>
                         </div>
-                        <div className="fctDel handcr" onClick={() => removeLigne(i)}>
-                          ✕
+                        <div className="fctLigneTotal">
+                          {money(totalLigne(l), draft.devise)}
                         </div>
                       </div>
                     ))}
-                  </div>
 
-                  <div className="fctLignesFoot">
-                    <div className="fctBtnGhost handcr" onClick={addLigne}>
-                      Ajouter une ligne
-                    </div>
-                    <div className="fctTotals">
-                      <div>
-                        <span>Total HT</span>
-                        <strong>{money(totals.ht, devise)}</strong>
-                      </div>
-                      <div>
-                        <span>TVA</span>
-                        <strong>{money(totals.tva, devise)}</strong>
-                      </div>
-                      <div className="fctTtc">
-                        <span>Total TTC</span>
-                        <strong>{money(totals.ttc, devise)}</strong>
+                    <div className="fctFormActions">
+                      <div className="fctBtnGhost handcr" onClick={ajouterLigne}>
+                        <Icon fafa="faPlus" width={9} />
+                        <span>Ajouter une ligne</span>
                       </div>
                     </div>
-                  </div>
-                </>
-              )}
-            </section>
 
-            <section ref={registerSection("analytics")} className="fctSection">
-              <h2>
-                <span className="fctNum">4.</span> Analytics
-              </h2>
-              <p className="fctHint">Chiffre d'affaires et encours</p>
-
-              <div className="fctStatRow">
-                <div className="fctStatCard">
-                  <div className="fctStatVal">{money(totauxGlobaux.facture)}</div>
-                  <div className="fctStatLbl">facturé</div>
-                </div>
-                <div className="fctStatCard">
-                  <div className="fctStatVal">{money(totauxGlobaux.encaisse)}</div>
-                  <div className="fctStatLbl">encaissé</div>
-                </div>
-                <div className="fctStatCard">
-                  <div className="fctStatVal">{money(totauxGlobaux.attente)}</div>
-                  <div className="fctStatLbl">en attente</div>
-                </div>
-                <div className="fctStatCard" data-alert={totauxGlobaux.retard > 0}>
-                  <div className="fctStatVal">{money(totauxGlobaux.retard)}</div>
-                  <div className="fctStatLbl">en retard</div>
-                </div>
-              </div>
-
-              <div className="fctBars">
-                {parStatut.map((s) => (
-                  <div key={s.id} className="fctBarRow">
-                    <div className="fctBarLabel">{s.label}</div>
-                    <div className="fctBarTrack">
-                      <div
-                        className="fctBarFill"
-                        data-tone={s.tone}
-                        style={{ width: `${(s.montant / maxStatut) * 100}%` }}
+                    <label className="fctField">
+                      <span className="fctLabel">Remise globale %</span>
+                      <input
+                        type="number"
+                        value={draft.remiseGlobale || 0}
+                        onChange={champ("remiseGlobale")}
                       />
+                    </label>
+
+                    <div className="fctRecap">
+                      <span>Sous-total</span>
+                      <strong>{money(totals.brut, draft.devise)}</strong>
                     </div>
-                    <div className="fctBarVal">
-                      {s.count} · {money(s.montant)}
+                    {totals.abattement ? (
+                      <div className="fctRecap">
+                        <span>Remise globale</span>
+                        <strong>− {money(totals.abattement, draft.devise)}</strong>
+                      </div>
+                    ) : null}
+                    <div className="fctRecap">
+                      <span>Total HT</span>
+                      <strong>{money(totals.ht, draft.devise)}</strong>
                     </div>
-                  </div>
-                ))}
-              </div>
-            </section>
-          </div>
+                    {/* Le détail par taux n'est pas décoratif : une facture
+                        doit le porter, et il permet de repérer une ligne
+                        dont le taux a été saisi de travers. */}
+                    {totals.parTaux.map((t) => (
+                      <div key={t.taux} className="fctRecap fctRecapFin">
+                        <span>TVA {t.taux} % sur {money(t.base, draft.devise)}</span>
+                        <strong>{money(t.montant, draft.devise)}</strong>
+                      </div>
+                    ))}
+                    <div className="fctRecap fctRecapTtc">
+                      <span>Total TTC</span>
+                      <strong>{money(totals.ttc, draft.devise)}</strong>
+                    </div>
 
-          {/* Panneau contextuel */}
-          <aside className="fctSide win11Scroll">
-            <div className="fctSideTitle">
-              {draft ? (selectedId ? "Facture ouverte" : "Nouvelle facture") : "Aperçu"}
-            </div>
+                    <div className="fctFormActions">
+                      <div
+                        className="fctPrimary handcr"
+                        data-off={busy}
+                        onClick={enregistrerDocument}
+                      >
+                        <Icon fafa="faFloppyDisk" width={11} />
+                        <span>{busy ? "…" : "Enregistrer"}</span>
+                      </div>
+                    </div>
+                  </>
+                ) : null}
 
-            <div className="fctCard">
-              {draft ? (
-                <>
-                  <div className="fctCardNum">{draft.numero || "—"}</div>
-                  <div className="fctCardClient">
-                    {draft.clientEntreprise || draft.clientNom || "Client à choisir"}
-                  </div>
-                  <div className="fctTag" data-tone={statusOf(draft).tone}>
-                    {statusOf(draft).label}
-                  </div>
-                  <div className="fctCardTtc">{money(totals.ttc, devise)}</div>
-                  <div className="fctCardMeta">
-                    {draft.lignes.length} ligne{draft.lignes.length > 1 ? "s" : ""} ·
-                    échéance {draft.echeance || "—"}
-                  </div>
-                </>
-              ) : (
-                <div className="fctCardEmpty">
-                  Sélectionnez une facture pour voir son résumé.
-                </div>
-              )}
-            </div>
+                {onglet === "reglements" ? (
+                  !selectedId ? (
+                    <div className="fctEmptyBox">
+                      Enregistrez le document avant d'encaisser.
+                    </div>
+                  ) : draft.type === "devis" ? (
+                    <div className="fctEmptyBox">
+                      Un devis ne s'encaisse pas. Convertissez-le en facture.
+                    </div>
+                  ) : (
+                    <>
+                      <div className="fctDeux">
+                        <label className="fctField">
+                          <span className="fctLabel">Montant</span>
+                          <input
+                            type="number"
+                            placeholder={String(Math.round(etatDoc?.reste ?? 0))}
+                            value={encaissement.montant}
+                            onChange={(e) =>
+                              setEncaissement((v) => ({ ...v, montant: e.target.value }))
+                            }
+                          />
+                        </label>
+                        <label className="fctField">
+                          <span className="fctLabel">Date</span>
+                          <input
+                            type="date"
+                            value={encaissement.date}
+                            onChange={(e) =>
+                              setEncaissement((v) => ({ ...v, date: e.target.value }))
+                            }
+                          />
+                        </label>
+                      </div>
 
-            <div
-              className="fctPrimary handcr"
-              data-off={!draft || busy}
-              onClick={saveFacture}
-            >
-              <Icon fafa="faFloppyDisk" width={12} />
-              <span>{busy ? "…" : "Enregistrer la facture"}</span>
-            </div>
+                      <div className="fctDeux">
+                        <label className="fctField">
+                          <span className="fctLabel">Moyen</span>
+                          <select
+                            value={encaissement.moyen}
+                            onChange={(e) =>
+                              setEncaissement((v) => ({ ...v, moyen: e.target.value }))
+                            }
+                          >
+                            {MOYENS.map((m) => (
+                              <option key={m} value={m}>
+                                {m}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                        <label className="fctField">
+                          <span className="fctLabel">Référence</span>
+                          <input
+                            type="text"
+                            placeholder="N° de transaction"
+                            value={encaissement.reference}
+                            onChange={(e) =>
+                              setEncaissement((v) => ({ ...v, reference: e.target.value }))
+                            }
+                          />
+                        </label>
+                      </div>
 
-            <div className="fctSideBtns">
-              <div className="fctSideBtn handcr" onClick={openNew}>
-                <Icon fafa="faFileCirclePlus" width={10} />
-                <span>Nouvelle</span>
-              </div>
-              <div
-                className="fctSideBtn handcr"
-                data-off={!draft || busy}
-                onClick={exportPdf}
-              >
-                <Icon fafa="faFilePdf" width={10} />
-                <span>Export PDF</span>
-              </div>
-            </div>
+                      <div className="fctFormActions">
+                        <div
+                          className="fctPrimary handcr"
+                          data-off={busy}
+                          onClick={ajouterReglement}
+                        >
+                          Enregistrer le règlement
+                        </div>
+                        {etatDoc?.reste ? (
+                          <div
+                            className="fctBtnGhost handcr"
+                            onClick={() =>
+                              setEncaissement((v) => ({
+                                ...v,
+                                montant: String(Math.round(etatDoc.reste)),
+                              }))
+                            }
+                          >
+                            Solder
+                          </div>
+                        ) : null}
+                      </div>
 
-            <div className="fctQuick">
-              <div className="fctQuickTitle">Options rapides</div>
-              <div className="fctQuickBtns">
-                <div
-                  className="fctQuickBtn handcr"
-                  data-off={!selectedId || draft?.statut === "payee"}
-                  onClick={markPaid}
-                >
-                  <Icon fafa="faCircleCheck" width={10} />
-                  <span>Marquer payée</span>
-                </div>
-                <div
-                  className="fctQuickBtn handcr"
-                  data-off={!draft?.clientEmail}
-                  onClick={() =>
-                    window.open(
-                      `mailto:${draft.clientEmail}?subject=${encodeURIComponent(
-                        `Facture ${draft.numero}`,
-                      )}`,
-                      "_blank",
-                    )
-                  }
-                >
-                  <Icon fafa="faEnvelope" width={10} />
-                  <span>Envoyer au client</span>
-                </div>
-                <div
-                  className="fctQuickBtn fctDanger handcr"
-                  data-off={!selectedId}
-                  onClick={deleteFacture}
-                >
-                  <Icon fafa="faTrash" width={10} />
-                  <span>Supprimer</span>
-                </div>
-              </div>
-            </div>
-
-            {notice ? <div className="fctNotice">{notice}</div> : null}
+                      {!reglementsDoc.length ? (
+                        <div className="fctEmptyBox">Aucun règlement enregistré.</div>
+                      ) : (
+                        <div className="fctHisto">
+                          {reglementsDoc.map((r) => (
+                            <div key={r.id} className="fctHistoLigne">
+                              <div className="fctHistoInfo">
+                                <div className="fctHistoTitre">
+                                  {money(r.data.montant, draft.devise)} · {r.data.moyen}
+                                </div>
+                                <div className="fctHistoMeta">
+                                  {[r.data.date, r.data.reference, r.auteur?.name]
+                                    .filter(Boolean)
+                                    .join(" · ")}
+                                </div>
+                              </div>
+                              <span
+                                className="fctIconBtn handcr"
+                                onClick={() => supprimerReglement(r)}
+                              >
+                                <Icon fafa="faXmark" width={10} />
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  )
+                ) : null}
+              </>
+            )}
           </aside>
+
+          {notice ? <div className="fctNotice">{notice}</div> : null}
         </div>
       )}
     </ModuleWindow>

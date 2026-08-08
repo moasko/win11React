@@ -3,17 +3,23 @@ import { useDispatch, useSelector } from "react-redux";
 import { Icon, Image } from "../../utils/general";
 import { api, setToken, clearToken } from "../../api/client";
 import { syncInstalledModules, detachAllModules } from "../../apps/sync";
+import { appliquerApparence, reinitialiserApparence } from "../../apps/appearance";
+import { resynchroniserNotifications } from "../../apps/notifications";
+import { Avatar } from "../../apps/Avatar";
 import "./back.scss";
 
 export const Background = () => {
   const wall = useSelector((state) => state.wallpaper);
-  const dispatch = useDispatch();
+  // Un fond importé par l'utilisateur prime sur les fonds livrés.
+  const perso = useSelector((state) => state.appearance.wallUrl);
 
   return (
     <div
       className="background"
       style={{
-        backgroundImage: `url(img/wallpaper/${wall.src})`,
+        backgroundImage: perso
+          ? `url(${perso})`
+          : `url(img/wallpaper/${wall.src})`,
       }}
     ></div>
   );
@@ -51,7 +57,7 @@ export const BootScreen = (props) => {
   return (
     <div className="bootscreen">
       <div className={blackout ? "hidden" : ""}>
-        <Image src="asset/bootlogo" w={180} />
+        <Image src="/img/asset/logo.svg" ext w={180} />
         <div className="mt-48" id="loader">
           <svg
             className="progressRing"
@@ -71,9 +77,22 @@ export const LockScreen = (props) => {
   const session = useSelector((state) => state.session);
   const [lock, setLock] = useState(false);
   const [unlocked, setUnLock] = useState(false);
-  // "login" ou "register"
+  // Trois entrées possibles dans CompanyOS :
+  //
+  //   login    — on a déjà un compte
+  //   register — on crée l'entreprise, donc l'espace de travail
+  //   join     — on a reçu un code d'invitation et aucun compte
+  //
+  // Le troisième cas n'est pas un détail : sans lui, inviter quelqu'un
+  // ne mène nulle part.
   const [mode, setMode] = useState("login");
-  const [form, setForm] = useState({ company: "", name: "", email: "", password: "" });
+  const [form, setForm] = useState({
+    company: "",
+    name: "",
+    email: "",
+    password: "",
+    code: "",
+  });
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const dispatch = useDispatch();
@@ -98,11 +117,15 @@ export const LockScreen = (props) => {
       const result =
         mode === "login"
           ? await api.login({ email: form.email, password: form.password })
-          : await api.register(form);
+          : mode === "join"
+            ? await api.join(form.code, form.name, form.password)
+            : await api.register(form);
       setToken(result.token);
       dispatch({ type: "SESSION_SET", payload: result });
       dispatch({ type: "STNGSETV", payload: { path: "person.name", value: result.user.name } });
       await syncInstalledModules();
+      await resynchroniserNotifications();
+      await appliquerApparence(result.tenant.id);
       proceed();
     } catch (err) {
       setError(err.message || "Connexion impossible");
@@ -115,6 +138,19 @@ export const LockScreen = (props) => {
     if (e.key === "Enter") submit();
   };
 
+  /// Les codes sont dictés au téléphone ou recopiés d'un message : on
+  /// accepte les minuscules et les espaces plutôt que de renvoyer
+  /// « code invalide » pour une majuscule manquante.
+  const changerCode = (e) => {
+    setForm({ ...form, code: e.target.value.toUpperCase().replace(/\s+/g, "") });
+    setError("");
+  };
+
+  const changerMode = (suivant) => {
+    setMode(suivant);
+    setError("");
+  };
+
   const authenticated = session.status === "authenticated";
 
   return (
@@ -122,7 +158,7 @@ export const LockScreen = (props) => {
       className={"lockscreen " + (props.dir == -1 ? "slowfadein" : "")}
       data-unlock={unlocked}
       style={{
-        backgroundImage: `url(${`img/wallpaper/lock.jpg`})`,
+        backgroundImage: `url(${`img/wallpaper/lock.svg`})`,
       }}
       onClick={() => setLock(true)}
       data-blur={lock}
@@ -148,11 +184,12 @@ export const LockScreen = (props) => {
         data-unlock={unlocked}
         onClick={(e) => e.stopPropagation()}
       >
-        <Image
-          className="rounded-full overflow-hidden"
-          src="img/asset/prof.jpg"
-          w={120}
-          ext
+        {/* Avant la connexion, on ne sait pas qui est là : un rond neutre
+            plutôt que la photo de la dernière personne connectée. */}
+        <Avatar
+          nom={authenticated ? session.user.name : ""}
+          photo={authenticated ? session.user.avatar : null}
+          taille={120}
         />
         {authenticated ? (
           <>
@@ -171,6 +208,8 @@ export const LockScreen = (props) => {
                 clearToken();
                 dispatch({ type: "SESSION_CLEAR" });
                 detachAllModules();
+                reinitialiserApparence();
+                resynchroniserNotifications();
               }}
             >
               Changer de compte
@@ -179,17 +218,39 @@ export const LockScreen = (props) => {
         ) : (
           <div className="authForm mt-4">
             <div className="text-xl font-medium text-gray-200 mb-3">
-              {mode === "login" ? "Connexion à CompanyOS" : "Créer votre espace de travail"}
+              {
+                {
+                  login: "Connexion à CompanyOS",
+                  register: "Créer votre espace de travail",
+                  join: "Rejoindre un espace de travail",
+                }[mode]
+              }
             </div>
-            {mode === "register" && (
+            {mode === "join" && (
+              // L'adresse n'est pas demandée : elle est déjà inscrite dans
+              // l'invitation. La saisir permettrait de rejoindre sous une
+              // autre identité que celle invitée.
+              <input
+                type="text"
+                className="authCode"
+                placeholder="Code d'invitation"
+                value={form.code}
+                onChange={changerCode}
+                onKeyDown={onKey}
+                autoFocus
+              />
+            )}
+            {mode !== "login" && (
               <>
-                <input
-                  type="text"
-                  placeholder="Nom de l'entreprise"
-                  value={form.company}
-                  onChange={field("company")}
-                  onKeyDown={onKey}
-                />
+                {mode === "register" && (
+                  <input
+                    type="text"
+                    placeholder="Nom de l'entreprise"
+                    value={form.company}
+                    onChange={field("company")}
+                    onKeyDown={onKey}
+                  />
+                )}
                 <input
                   type="text"
                   placeholder="Votre nom"
@@ -199,35 +260,44 @@ export const LockScreen = (props) => {
                 />
               </>
             )}
-            <input
-              type="email"
-              placeholder="Adresse e-mail"
-              value={form.email}
-              onChange={field("email")}
-              onKeyDown={onKey}
-              autoFocus
-            />
+            {mode !== "join" && (
+              <input
+                type="email"
+                placeholder="Adresse e-mail"
+                value={form.email}
+                onChange={field("email")}
+                onKeyDown={onKey}
+                autoFocus
+              />
+            )}
             <input
               type="password"
-              placeholder={mode === "register" ? "Mot de passe (8 caractères min.)" : "Mot de passe"}
+              placeholder={mode === "login" ? "Mot de passe" : "Mot de passe (8 caractères min.)"}
               value={form.password}
               onChange={field("password")}
               onKeyDown={onKey}
             />
             {error ? <div className="authError">{error}</div> : null}
             <div className="flex items-center mt-4 signInBtn" onClick={submit}>
-              {busy ? "…" : mode === "login" ? "Se connecter" : "Créer mon espace"}
+              {busy
+                ? "…"
+                : { login: "Se connecter", register: "Créer mon espace", join: "Rejoindre" }[mode]}
             </div>
             <div
               className="text-xs text-gray-400 mt-4 handcr"
-              onClick={() => {
-                setMode(mode === "login" ? "register" : "login");
-                setError("");
-              }}
+              onClick={() => changerMode(mode === "login" ? "register" : "login")}
             >
               {mode === "login"
                 ? "Pas encore de compte ? Créer un espace de travail"
                 : "Déjà un compte ? Se connecter"}
+            </div>
+            <div
+              className="text-xs text-gray-400 mt-2 handcr"
+              onClick={() => changerMode(mode === "join" ? "login" : "join")}
+            >
+              {mode === "join"
+                ? "Retour à la connexion"
+                : "On m'a invité — j'ai un code"}
             </div>
           </div>
         )}

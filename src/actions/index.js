@@ -175,20 +175,29 @@ export const getTreeValue = (obj, path) => {
   return tdir;
 };
 
-export const changeTheme = () => {
-  var thm = store.getState().setting.person.theme,
-    thm = thm == "light" ? "dark" : "light";
-  var icon = thm == "light" ? "sun" : "moon";
+/// Applique un thème donné. Le fond d'écran n'est plus touché : il est
+/// choisi explicitement dans les Paramètres, et l'écraser à chaque
+/// changement de thème annulait silencieusement ce choix.
+export const applyTheme = (theme) => {
+  const thm = theme === "dark" ? "dark" : "light";
 
   document.body.dataset.theme = thm;
   store.dispatch({ type: "STNGTHEME", payload: thm });
-  store.dispatch({ type: "PANETHEM", payload: icon });
-  store.dispatch({ type: "WALLSET", payload: thm == "light" ? 0 : 1 });
+  store.dispatch({ type: "PANETHEM", payload: thm === "light" ? "sun" : "moon" });
+};
+
+export const changeTheme = () => {
+  const actuel = store.getState().setting.person.theme;
+  applyTheme(actuel === "light" ? "dark" : "light");
 };
 
 export const loadSettings = () => {
-  var sett = localStorage.getItem("setting") || "{}";
-  sett = JSON.parse(sett);
+  let sett;
+  try {
+    sett = JSON.parse(localStorage.getItem("setting") || "{}");
+  } catch {
+    sett = {};
+  }
 
   if (sett.person == null) {
     sett = JSON.parse(JSON.stringify(store.getState().setting));
@@ -200,9 +209,15 @@ export const loadSettings = () => {
     }
   }
 
-  if (sett.person.theme != "light") changeTheme();
+  // On ne garde que `person` : d'anciens enregistrements contiennent
+  // encore les réglages matériels supprimés (Wi-Fi, batterie…), qui
+  // reviendraient sinon dans l'état.
+  store.dispatch({ type: "SETTLOAD", payload: { person: sett.person } });
 
-  store.dispatch({ type: "SETTLOAD", payload: sett });
+  // Le thème est appliqué directement, pas en basculant : basculer
+  // depuis l'état par défaut donnait un affichage en désaccord avec la
+  // préférence enregistrée.
+  applyTheme(sett.person.theme);
 };
 
 // mostly file explorer

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" role="img" aria-label="Présentations">
+  <path d="M13 0h22a13 13 0 0 1 13 13v22a13 13 0 0 1-13 13H4a4 4 0 0 1-4-4V13A13 13 0 0 1 13 0Z" fill="#6366F1"/>
+  <rect x="12" y="12.5" width="24" height="17" rx="2.5" fill="#fff"/>
+  <g stroke="#6366F1" stroke-width="2.4" stroke-linecap="round" opacity=".45">
+    <path d="M18 25v-3.5M24 25v-7M30 25v-5"/>
+  </g>
+  <g stroke="#fff" stroke-width="3" stroke-linecap="round" fill="none" opacity=".6">
+    <path d="M24 29.5v3"/>
+    <path d="M19 35.5l5-3 5 3"/>
+  </g>
+</svg>

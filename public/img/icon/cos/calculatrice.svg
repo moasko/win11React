@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" role="img" aria-label="Calculatrice">
+  <path d="M13 0h22a13 13 0 0 1 13 13v22a13 13 0 0 1-13 13H4a4 4 0 0 1-4-4V13A13 13 0 0 1 13 0Z" fill="#0D9488"/>
+  <rect x="14" y="11.5" width="20" height="25" rx="4" fill="#fff"/>
+  <rect x="17.5" y="15" width="13" height="5.5" rx="1.8" fill="#0D9488" opacity=".4"/>
+  <g fill="#0D9488" opacity=".65">
+    <circle cx="19.5" cy="25.5" r="1.9"/><circle cx="24" cy="25.5" r="1.9"/><circle cx="28.5" cy="25.5" r="1.9"/>
+    <circle cx="19.5" cy="31.5" r="1.9"/><circle cx="24" cy="31.5" r="1.9"/><circle cx="28.5" cy="31.5" r="1.9"/>
+  </g>
+</svg>

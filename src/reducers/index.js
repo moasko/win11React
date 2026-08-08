@@ -6,12 +6,14 @@ import deskReducer from "./desktop";
 import menuReducer from "./startmenu";
 import paneReducer from "./sidepane";
 import appReducer from "./apps";
-import menusReducer from "./menu";
 import globalReducer from "./globals";
 import settReducer from "./settings";
 import fileReducer from "./files";
 import sessionReducer from "./session";
 import cloudReducer from "./cloud";
+import customAppsReducer from "./customApps";
+import deskLayoutReducer from "./deskLayout";
+import appearanceReducer from "./appearance";
 
 const allReducers = combineReducers({
   wallpaper: wallReducer,
@@ -20,12 +22,14 @@ const allReducers = combineReducers({
   startmenu: menuReducer,
   sidepane: paneReducer,
   apps: appReducer,
-  menus: menusReducer,
   globals: globalReducer,
   setting: settReducer,
   files: fileReducer,
   session: sessionReducer,
   cloud: cloudReducer,
+  customApps: customAppsReducer,
+  deskLayout: deskLayoutReducer,
+  appearance: appearanceReducer,
 });
 
 var store = createStore(allReducers);

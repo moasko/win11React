@@ -183,7 +183,7 @@ const frDate = (iso) => {
 
 /// Produit le PDF d'une facture. `totaux` vient du module pour que le
 /// document affiche exactement ce que l'écran montrait.
-export const invoiceToPdf = ({ facture, totaux, emetteur, statutLabel }) => {
+export const invoiceToPdf = ({ facture, totaux, emetteur, statutLabel, typeLabel }) => {
   const page = new Page(595.28, 841.89); // A4
   const M = 48; // marge
   const right = page.width - M;
@@ -196,7 +196,14 @@ export const invoiceToPdf = ({ facture, totaux, emetteur, statutLabel }) => {
   page.text(emetteur.nom, M, 62, { size: 15, bold: true });
   page.text("Espace de travail CompanyOS", M, 78, { size: 8.5, color: grey });
 
-  page.text("FACTURE", right, 60, { size: 22, bold: true, align: "right", color: accent });
+  // Le titre suit le type : un devis présenté comme une facture serait
+  // encaissé par erreur, et un avoir facturé une deuxième fois.
+  page.text((typeLabel || "FACTURE").toUpperCase(), right, 60, {
+    size: 22,
+    bold: true,
+    align: "right",
+    color: accent,
+  });
   page.text(`N° ${facture.numero}`, right, 78, { size: 10, align: "right" });
   page.text(statutLabel, right, 93, { size: 8.5, align: "right", color: grey });
 
@@ -307,7 +314,7 @@ export const invoiceToPdf = ({ facture, totaux, emetteur, statutLabel }) => {
 
   page.line(M, page.height - 58, right, page.height - 58);
   page.text(
-    `${emetteur.nom} — facture ${facture.numero} — générée par CompanyOS`,
+    `${emetteur.nom} — ${(typeLabel || "facture").toLowerCase()} ${facture.numero} — générée par CompanyOS`,
     M,
     page.height - 42,
     { size: 8, color: grey },

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" role="img" aria-label="CRM">
+  <path d="M13 0h22a13 13 0 0 1 13 13v22a13 13 0 0 1-13 13H4a4 4 0 0 1-4-4V13A13 13 0 0 1 13 0Z" fill="#D97706"/>
+  <g fill="#fff" opacity=".5">
+    <circle cx="32" cy="18.5" r="4.5"/>
+    <path d="M32 25c3.9 0 6.5 2.5 6.5 6.2V36H25.5v-4.8c0-3.7 2.6-6.2 6.5-6.2Z"/>
+  </g>
+  <g fill="#fff">
+    <circle cx="20" cy="20" r="6"/>
+    <path d="M20 28c5 0 9 3.3 9 7.5V36H11v-.5c0-4.2 4-7.5 9-7.5Z"/>
+  </g>
+</svg>

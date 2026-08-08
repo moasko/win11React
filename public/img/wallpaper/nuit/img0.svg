@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1200" preserveAspectRatio="xMidYMid slice" width="1920" height="1200">
+  <defs>
+    <linearGradient id="nuFond" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#08080C"/>
+      <stop offset="1" stop-color="#171233"/>
+    </linearGradient>
+    <radialGradient id="nuGlow" cx=".5" cy=".92" r=".72">
+      <stop offset="0" stop-color="#7C3AED" stop-opacity=".38"/>
+      <stop offset="1" stop-color="#7C3AED" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="nuTint" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#A78BFA" stop-opacity=".16"/>
+      <stop offset="1" stop-color="#A78BFA" stop-opacity=".02"/>
+    </linearGradient>
+    <path id="nuTuile" d="M13 0h22a13 13 0 0 1 13 13v22a13 13 0 0 1-13 13H4a4 4 0 0 1-4-4V13A13 13 0 0 1 13 0Z"/>
+  </defs>
+  <rect width="1920" height="1200" fill="url(#nuFond)"/>
+  <rect width="1920" height="1200" fill="url(#nuGlow)"/>
+  <use href="#nuTuile" fill="url(#nuTint)" transform="translate(1240 220) rotate(-20) scale(13)"/>
+  <use href="#nuTuile" fill="url(#nuTint)" transform="translate(360 640) rotate(14) scale(8)"/>
+</svg>

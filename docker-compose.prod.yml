@@ -1,0 +1,65 @@
+# CompanyOS en production — pensé pour Dokploy.
+#
+# Trois services : la base, l'API, le front. Dokploy lit ce fichier tel
+# quel (service « Docker Compose »), fournit les variables d'environnement
+# depuis son onglet Environment, et attache les domaines via son interface :
+#
+#   - domaine du front  → service web,  port 80
+#   - domaine de l'API  → service api,  port 4000
+#
+# Les données vivent dans deux volumes : la base et les fichiers du cloud.
+# Sans eux, chaque redéploiement effacerait les espaces de travail.
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: companyos
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: companyos
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U companyos"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: ./server
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://companyos:${POSTGRES_PASSWORD}@postgres:5432/companyos?schema=public
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+      # Le domaine public du front, pour le CORS — https compris.
+      CORS_ORIGIN: ${CORS_ORIGIN}
+      STORAGE_DRIVER: local
+      STORAGE_LOCAL_PATH: /data/storage
+      DEFAULT_TENANT_QUOTA: ${DEFAULT_TENANT_QUOTA:-5368709120}
+    volumes:
+      - storage-data:/data/storage
+    expose:
+      - "4000"
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+      args:
+        # Figée dans le build du front : le domaine public de l'API.
+        VITE_API_URL: ${VITE_API_URL}
+    restart: unless-stopped
+    depends_on:
+      - api
+    expose:
+      - "80"
+
+volumes:
+  postgres-data:
+  storage-data:

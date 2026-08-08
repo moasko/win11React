@@ -1,0 +1,21 @@
+// Avatar — voir Avatar.jsx.
+
+.cosAvatar {
+  flex-shrink: 0;
+  border-radius: 50%;
+  object-fit: cover;
+  // Une photo carrée recadrée en rond doit être centrée sur le visage, qui
+  // est presque toujours dans le haut du cadre.
+  object-position: center 30%;
+  user-select: none;
+}
+
+.cosAvatarInit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  line-height: 1;
+}

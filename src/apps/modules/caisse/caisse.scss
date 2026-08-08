@@ -1,0 +1,783 @@
+// Caisse — voir index.jsx.
+//
+// Une caisse ne se lit pas comme un tableau de bord : on la manipule
+// debout, vite, parfois d'un doigt. Trois règles tiennent toute la feuille.
+//
+//   - **Les cibles sont grandes.** Un produit fait au moins 96 px de côté,
+//     un moyen de paiement 64 px de haut. Ce qui se touche ne se dessine
+//     pas comme ce qui se lit.
+//   - **Le rendu de monnaie domine tout.** C'est le seul chiffre qu'on lit
+//     de loin, la main dans le tiroir.
+//   - **Les montants sont en chiffres de largeur fixe.** Une colonne de
+//     prix qui ondule ne se compare pas.
+
+.csApp {
+  --cs-bg: #ffffff;
+  --cs-panel: #f7f8fa;
+  --cs-line: #e3e6eb;
+  --cs-text: #1f2733;
+  --cs-muted: #6b7684;
+  --cs-accent: #0d9488; // sarcelle : l'encaissement, le comptoir
+  --cs-accent-soft: #e6f5f3;
+  --cs-ok: #047857;
+  --cs-danger: #c0392b;
+  --cs-attention: #b26a00;
+
+  background: var(--cs-bg);
+  color: var(--cs-text);
+
+  // Une grille de produits et un ticket côte à côte : c'est large par
+  // nature, et c'est plein écran dans la vraie vie.
+  &.floatTab[data-size="mini"] {
+    width: 86%;
+    height: 88%;
+    top: 5%;
+    left: 7%;
+    min-width: 940px;
+    min-height: 600px;
+  }
+
+  .csVerrou {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-grow: 1;
+    font-size: 0.84em;
+    color: var(--cs-muted);
+  }
+
+  .csShell {
+    display: flex;
+    flex-grow: 1;
+    min-height: 0;
+  }
+
+  .csGauche {
+    flex-grow: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  // Le ticket ne défile pas avec la grille : il reste sous les yeux.
+  .csDroite {
+    width: 340px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    background: var(--cs-panel);
+    border-left: 1px solid var(--cs-line);
+  }
+
+  // ---- Barre de session ---------------------------------------------------
+
+  .csBarre {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--cs-line);
+    font-size: 0.78em;
+  }
+
+  .csPastilleOuvert {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 4px 11px;
+    border-radius: 100px;
+    background: var(--cs-accent-soft);
+    color: var(--cs-accent);
+    font-weight: 600;
+
+    .uicon {
+      display: flex;
+    }
+  }
+
+  .csStat {
+    color: var(--cs-muted);
+
+    b {
+      color: var(--cs-text);
+      font-variant-numeric: tabular-nums;
+    }
+
+    &:last-of-type {
+      margin-right: auto;
+    }
+  }
+
+  // ---- Recherche et catégories --------------------------------------------
+
+  .csRecherche {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--cs-line);
+
+    .uicon {
+      display: flex;
+      color: var(--cs-muted);
+    }
+
+    input {
+      flex-grow: 1;
+      min-width: 0;
+      border: none;
+      outline: none;
+      background: transparent;
+      color: var(--cs-text);
+      font-family: inherit;
+      font-size: 0.86em;
+    }
+  }
+
+  .csCategories {
+    display: flex;
+    gap: 7px;
+    padding: 10px 16px 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
+  }
+
+  .csCategorie {
+    padding: 6px 13px;
+    border: 1px solid var(--cs-line);
+    border-radius: 100px;
+    font-size: 0.76em;
+    white-space: nowrap;
+    flex-shrink: 0;
+
+    &[data-actif="true"] {
+      background: var(--cs-accent);
+      border-color: var(--cs-accent);
+      color: #fff;
+      font-weight: 600;
+    }
+  }
+
+  // ---- Grille de produits -------------------------------------------------
+
+  .csGrille {
+    flex-grow: 1;
+    overflow-y: auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(124px, 1fr));
+    gap: 10px;
+    padding: 14px 16px;
+    align-content: start;
+  }
+
+  .csProduit {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 8px;
+    border: 1px solid var(--cs-line);
+    border-radius: 10px;
+    background: var(--cs-bg);
+
+    &:hover {
+      border-color: var(--cs-accent);
+    }
+
+    // Un doigt appuie : le retour doit être immédiat et net.
+    &:active {
+      transform: scale(0.97);
+      background: var(--cs-accent-soft);
+    }
+
+    // Une rupture se signale sans jamais empêcher la vente : le commerçant
+    // sait mieux que le logiciel ce qu'il a en rayon.
+    &[data-rupture="true"] {
+      opacity: 0.7;
+    }
+  }
+
+  .csProduitImage {
+    position: relative;
+    aspect-ratio: 1;
+    border-radius: 7px;
+    background: var(--cs-panel);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    color: var(--cs-muted);
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .uicon {
+      display: flex;
+    }
+  }
+
+  .csRupture {
+    position: absolute;
+    bottom: 4px;
+    left: 4px;
+    right: 4px;
+    padding: 2px;
+    border-radius: 4px;
+    background: color-mix(in srgb, var(--cs-danger) 88%, transparent);
+    color: #fff;
+    font-size: 0.6em;
+    font-weight: 700;
+    text-align: center;
+    text-transform: uppercase;
+  }
+
+  .csProduitNom {
+    font-size: 0.72em;
+    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .csProduitPrix {
+    font-size: 0.76em;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--cs-accent);
+  }
+
+  // ---- Ticket -------------------------------------------------------------
+
+  .csTicketTete {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--cs-line);
+
+    h3 {
+      margin: 0;
+      flex-grow: 1;
+      font-size: 0.86em;
+      font-weight: 600;
+    }
+  }
+
+  .csVider,
+  .csRetour {
+    display: flex;
+    padding: 6px;
+    border-radius: 6px;
+    color: var(--cs-muted);
+
+    &:hover {
+      color: var(--cs-danger);
+      background: color-mix(in srgb, var(--cs-danger) 10%, transparent);
+    }
+  }
+
+  .csRetour:hover {
+    color: var(--cs-text);
+    background: color-mix(in srgb, var(--cs-text) 8%, transparent);
+  }
+
+  .csLignes {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 8px 10px;
+  }
+
+  .csTicketVide {
+    padding: 40px 16px;
+    text-align: center;
+    font-size: 0.76em;
+    line-height: 1.6;
+    color: var(--cs-muted);
+  }
+
+  .csLigne {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto 84px;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 6px;
+    border-bottom: 1px solid color-mix(in srgb, var(--cs-line) 60%, transparent);
+    font-size: 0.78em;
+  }
+
+  .csLigneNom {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  // Plus et moins : des cibles carrées de 26 px, utilisables au doigt.
+  .csLigneQte {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+
+    span {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 26px;
+      height: 26px;
+      border-radius: 6px;
+      border: 1px solid var(--cs-line);
+      font-size: 1.1em;
+      line-height: 1;
+
+      &:hover {
+        border-color: var(--cs-accent);
+        color: var(--cs-accent);
+      }
+    }
+
+    b {
+      min-width: 28px;
+      text-align: center;
+      font-variant-numeric: tabular-nums;
+    }
+  }
+
+  .csLigneTotal {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+  }
+
+  .csTotaux {
+    padding: 12px 14px;
+    border-top: 1px solid var(--cs-line);
+    background: var(--cs-bg);
+  }
+
+  .csTotalLigne {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75em;
+    color: var(--cs-muted);
+    margin-bottom: 4px;
+  }
+
+  .csTotalPetit {
+    font-size: 0.7em;
+  }
+
+  .csTotalGrand {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin: 10px 0 12px;
+    font-size: 0.84em;
+
+    b {
+      font-size: 1.6em;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+  }
+
+  // ---- Paiement -----------------------------------------------------------
+
+  .csPaiement {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 12px 14px;
+  }
+
+  .csAPayer {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    padding: 12px 14px;
+    margin-bottom: 14px;
+    border-radius: 10px;
+    background: var(--cs-accent-soft);
+    color: var(--cs-accent);
+    font-size: 0.8em;
+
+    b {
+      font-size: 1.8em;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+  }
+
+  .csMoyens {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .csMoyen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    height: 64px;
+    border: 1px solid var(--cs-line);
+    border-radius: 9px;
+    font-size: 0.73em;
+    background: var(--cs-bg);
+
+    .uicon {
+      display: flex;
+      color: var(--cs-muted);
+    }
+
+    &[data-actif="true"] {
+      border-color: var(--cs-accent);
+      background: var(--cs-accent-soft);
+      color: var(--cs-accent);
+      font-weight: 600;
+
+      .uicon {
+        color: var(--cs-accent);
+      }
+    }
+  }
+
+  .csCoupures {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 7px;
+    margin-bottom: 12px;
+  }
+
+  .csCoupure {
+    padding: 11px 4px;
+    border: 1px solid var(--cs-line);
+    border-radius: 8px;
+    background: var(--cs-bg);
+    text-align: center;
+    font-size: 0.76em;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+
+    &:hover {
+      border-color: var(--cs-accent);
+      color: var(--cs-accent);
+    }
+
+    &:active {
+      background: var(--cs-accent-soft);
+    }
+  }
+
+  .csSaisie {
+    display: flex;
+    gap: 7px;
+    margin-bottom: 12px;
+
+    input {
+      flex-grow: 1;
+      min-width: 0;
+      padding: 8px 11px;
+      border: 1px solid var(--cs-line);
+      border-radius: 7px;
+      background: var(--cs-bg);
+      color: var(--cs-text);
+      font-family: inherit;
+      font-size: 0.8em;
+      box-sizing: border-box;
+
+      &:focus {
+        outline: none;
+        border-color: var(--cs-accent);
+      }
+    }
+  }
+
+  .csRecus {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .csRecu {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 11px;
+    border-radius: 7px;
+    background: var(--cs-bg);
+    font-size: 0.76em;
+
+    b {
+      margin-left: auto;
+      font-variant-numeric: tabular-nums;
+    }
+
+    span:last-child {
+      display: flex;
+      padding: 3px;
+      border-radius: 4px;
+      color: var(--cs-muted);
+
+      &:hover {
+        color: var(--cs-danger);
+      }
+    }
+  }
+
+  // Le rendu de monnaie : le plus gros chiffre de l'écran, et c'est voulu.
+  .csRendu {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 14px;
+    background: var(--cs-ok);
+    color: #fff;
+
+    span {
+      font-size: 0.74em;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      opacity: 0.85;
+    }
+
+    b {
+      font-size: 2.4em;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      line-height: 1.1;
+    }
+
+    em {
+      font-size: 0.7em;
+      font-style: normal;
+      opacity: 0.85;
+    }
+  }
+
+  // ---- Accueil et historique ----------------------------------------------
+
+  .csAccueil {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex-grow: 1;
+    gap: 12px;
+    padding: 48px 32px;
+    text-align: center;
+    color: var(--cs-muted);
+    overflow-y: auto;
+
+    p {
+      max-width: 50ch;
+      font-size: 0.8em;
+      line-height: 1.65;
+      margin: 0 0 6px;
+    }
+
+    .uicon {
+      display: flex;
+    }
+  }
+
+  .csAccueilTitre {
+    font-size: 1.25em;
+    font-weight: 600;
+    color: var(--cs-text);
+  }
+
+  .csHistorique {
+    width: 100%;
+    max-width: 560px;
+    margin-top: 26px;
+    text-align: left;
+
+    h3 {
+      margin: 0 0 8px;
+      font-size: 0.8em;
+      font-weight: 600;
+      color: var(--cs-text);
+    }
+  }
+
+  // ---- Fermeture ----------------------------------------------------------
+
+  .csFermeture {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 0 20px 24px;
+  }
+
+  .csDeux {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+    margin-top: 16px;
+  }
+
+  .csBloc {
+    padding: 16px 18px;
+    border: 1px solid var(--cs-line);
+    border-radius: 10px;
+
+    h4 {
+      margin: 0 0 10px;
+      font-size: 0.82em;
+      font-weight: 600;
+    }
+  }
+
+  .csComptage {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .csCoupureLigne {
+    display: grid;
+    grid-template-columns: 78px 72px minmax(0, 1fr);
+    align-items: center;
+    gap: 10px;
+    font-size: 0.76em;
+
+    span {
+      color: var(--cs-muted);
+      font-variant-numeric: tabular-nums;
+    }
+
+    input {
+      padding: 5px 9px;
+      border: 1px solid var(--cs-line);
+      border-radius: 6px;
+      background: var(--cs-bg);
+      color: var(--cs-text);
+      font-family: inherit;
+      font-size: 1em;
+      text-align: right;
+      box-sizing: border-box;
+
+      &:focus {
+        outline: none;
+        border-color: var(--cs-accent);
+      }
+    }
+
+    b {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+  }
+
+  // L'écart n'est jamais corrigé en silence : il occupe la largeur.
+  .csEcart {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 16px;
+    padding: 14px 18px;
+    border-radius: 10px;
+    font-size: 0.84em;
+    background: var(--cs-accent-soft);
+    color: var(--cs-ok);
+
+    b {
+      font-size: 1.5em;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+
+    &[data-ecart="moins"] {
+      background: color-mix(in srgb, var(--cs-danger) 10%, transparent);
+      color: var(--cs-danger);
+    }
+
+    &[data-ecart="plus"] {
+      background: color-mix(in srgb, var(--cs-attention) 12%, transparent);
+      color: var(--cs-attention);
+    }
+  }
+
+  .csActions {
+    display: flex;
+    gap: 9px;
+    margin-top: 16px;
+  }
+
+  // ---- Tableaux -----------------------------------------------------------
+
+  .csTable {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.76em;
+
+    th {
+      text-align: left;
+      padding: 6px 8px;
+      border-bottom: 1px solid var(--cs-line);
+      font-weight: 600;
+      color: var(--cs-muted);
+    }
+
+    td {
+      padding: 5px 8px;
+      border-bottom: 1px solid color-mix(in srgb, var(--cs-line) 55%, transparent);
+    }
+
+    tfoot td {
+      padding-top: 8px;
+      border-top: 1px solid var(--cs-line);
+      border-bottom: none;
+      font-weight: 700;
+    }
+  }
+
+  .csMt {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+
+    &[data-ecart="moins"] {
+      color: var(--cs-danger);
+      font-weight: 600;
+    }
+
+    &[data-ecart="plus"] {
+      color: var(--cs-attention);
+      font-weight: 600;
+    }
+
+    &[data-ecart="nul"] {
+      color: var(--cs-ok);
+    }
+  }
+}
+
+body[data-theme="dark"] .csApp {
+  --cs-bg: #1f2226;
+  --cs-panel: #17191d;
+  --cs-line: #33383f;
+  --cs-text: #e6e8ea;
+  --cs-muted: #9aa2ad;
+  --cs-accent: #2dd4bf;
+  --cs-accent-soft: #16352f;
+  --cs-ok: #34d399;
+  --cs-danger: #f87171;
+  --cs-attention: #fbbf24;
+
+  .csRendu {
+    color: #10231b;
+  }
+
+  .csCategorie[data-actif="true"] {
+    color: #10231b;
+  }
+}

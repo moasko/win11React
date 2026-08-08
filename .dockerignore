@@ -1,0 +1,11 @@
+node_modules
+server/node_modules
+build
+dist
+.git
+.env
+*.env
+server/.env
+server/storage
+.claude
+*.log

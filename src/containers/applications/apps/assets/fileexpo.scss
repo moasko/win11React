@@ -1,3 +1,101 @@
+// Vignette d'image dans la grille : cadre fixe, image contenue, pour que
+// les portraits et les panoramiques s'alignent quand même.
+// L'icône de type d'un fichier ou d'un dossier : même gabarit que la
+// vignette, pour que la grille reste régulière quel que soit le mélange.
+.thumbIcone {
+  width: 62px;
+  height: 62px;
+  object-fit: contain;
+  // Un soupçon de profondeur, comme des objets posés sur le bureau.
+  filter: drop-shadow(0 1px 1.5px rgb(0 0 0 / 18%));
+}
+
+.gridshow[data-size="lg"] .thumbIcone {
+  width: 76px;
+  height: 76px;
+}
+
+.thumbBox {
+  width: 62px;
+  height: 62px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  overflow: hidden;
+  background: rgb(0 0 0 / 6%);
+
+  img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+  }
+}
+
+body[data-theme="dark"] .thumbBox {
+  background: rgb(255 255 255 / 8%);
+}
+
+// Visionneuse plein cadre, à l'intérieur de la fenêtre seulement.
+.imgViewer {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 46px 24px 24px;
+  background: rgb(0 0 0 / 78%);
+  backdrop-filter: blur(3px);
+
+  > img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    border-radius: 4px;
+    box-shadow: 0 12px 40px rgb(0 0 0 / 45%);
+  }
+
+  .imgViewerBar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 10px 16px;
+    font-size: 0.74em;
+    color: #fff;
+    background: rgb(0 0 0 / 35%);
+  }
+
+  .imgViewerName {
+    flex-grow: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .imgViewerSize {
+    opacity: 0.7;
+    white-space: nowrap;
+  }
+
+  .imgViewerBtn {
+    white-space: nowrap;
+    opacity: 0.85;
+
+    &:hover {
+      opacity: 1;
+      text-decoration: underline;
+    }
+  }
+}
+
 .msfiles {
   background: var(--fakeMica);
   color: var(--txt-col);
@@ -89,6 +187,12 @@
   align-items: center;
   position: relative;
   font-weight: 400;
+
+  // Corbeille ouverte : le volet latéral le montre, puisque le fil
+  // d'ariane ne fait plus référence au dossier courant.
+  &[data-active="true"] {
+    font-weight: 600;
+  }
 }
 
 .sec1 {
@@ -232,9 +336,51 @@
 .contentarea {
   display: flex;
   flex-direction: column;
+  position: relative;
 
   &:focus {
     outline: none;
+  }
+
+  // Glisser-déposer : un voile sur toute la zone plutôt qu'une cible
+  // étroite — on ne devrait pas avoir à viser pour déposer un fichier.
+  .dropVoile {
+    position: absolute;
+    inset: 8px;
+    z-index: 6;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    border: 2px dashed #3b82f6;
+    border-radius: 12px;
+    background: rgb(59 130 246 / 10%);
+    backdrop-filter: blur(2px);
+    color: #2563eb;
+    font-size: 0.82em;
+    font-weight: 600;
+    pointer-events: none;
+
+    .uicon {
+      display: flex;
+    }
+  }
+
+  .dropProgres {
+    position: absolute;
+    left: 50%;
+    bottom: 16px;
+    transform: translateX(-50%);
+    z-index: 6;
+    padding: 8px 16px;
+    border-radius: 10px;
+    background: #101014;
+    color: #fff;
+    font-size: 0.72em;
+    box-shadow: 0 10px 26px rgb(0 0 0 / 35%);
+    pointer-events: none;
+    white-space: nowrap;
   }
 
   .contentwrap {
@@ -276,6 +422,11 @@
     padding: 0 1em;
     font-size: 0.72em;
     font-weight: 400;
+    // Ces trois déclarations doivent rester avant les règles imbriquées :
+    // Sass avertit que leur ordre d'émission change dans une version à venir.
+    grid-template-columns: repeat(auto-fill, var(--cwidth));
+    justify-content: space-between;
+    align-items: flex-end;
 
     &[data-size="lg"] {
       --cwidth: 8.6em;
@@ -290,9 +441,6 @@
     .conticon {
       align-self: flex-start;
     }
-    grid-template-columns: repeat(auto-fill, var(--cwidth));
-    justify-content: space-between;
-    align-items: flex-end;
   }
 }
 

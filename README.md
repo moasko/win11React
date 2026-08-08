@@ -37,7 +37,10 @@ Gestionnaire de tâches, Corbeille.
 **Les modules métier** (`src/apps/modules/`) s'installent depuis la Boutique.
 Un module non installé n'existe pas dans le shell : ni icône, ni fenêtre.
 Créer une app se résume à copier `src/apps/modules/_template/` et à déclarer
-l'app au catalogue — voir [src/apps/README.md](src/apps/README.md).
+l'app au catalogue.
+
+📘 **[Comment créer une application](docs/CREER-UNE-APP.md)** — le guide
+complet : structure, mise en page, données, fichiers, pièges connus.
 
 ## Fichiers
 
