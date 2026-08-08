@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" role="img" aria-label="Courrier">
+  <path d="M13 0h22a13 13 0 0 1 13 13v22a13 13 0 0 1-13 13H4a4 4 0 0 1-4-4V13A13 13 0 0 1 13 0Z" fill="#2563EB"/>
+  <rect x="9" y="14" width="30" height="21" rx="3" fill="#fff"/>
+  <path d="M10.5 16.5 24 26l13.5-9.5" fill="none" stroke="#2563EB" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M10.5 33l9-8M37.5 33l-9-8" stroke="#2563EB" stroke-width="1.4" opacity=".35"/>
+</svg>

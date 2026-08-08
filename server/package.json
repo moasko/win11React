@@ -26,6 +26,7 @@
     "fastify": "^5.2.1",
     "ipaddr.js": "^2.5.0",
     "jsonwebtoken": "^9.0.2",
+    "nodemailer": "^9.0.5",
     "zod": "^3.24.1"
   },
   "devDependencies": {

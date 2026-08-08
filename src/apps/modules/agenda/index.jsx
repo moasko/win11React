@@ -23,6 +23,8 @@ import { Icon } from "../../../utils/general";
 import { api } from "../../../api/client";
 import { modal } from "../../modalRequest";
 import { ouvrirFenetre } from "../../windows";
+import { saveToCloud } from "../../cloud";
+import { composerCourriel } from "../../courrielRequest";
 import { Contenu, useChargement } from "../../chargement";
 import { Bouton } from "../../ui";
 import * as D from "./domaine";
@@ -170,6 +172,49 @@ function AgendaApp() {
     else editer(evenement);
   };
 
+  /// Inviter par mail : l'événement devient un fichier .ics dans le cloud,
+  /// joint à un courriel prérempli. Le destinataire clique, son calendrier
+  /// — Outlook, Gmail, un téléphone — propose d'ajouter le rendez-vous.
+  const inviter = async (evenement) => {
+    setOccupe(true);
+    try {
+      const ics = D.icsDe(evenement, {
+        organisateur: session.tenant?.name || "CompanyOS",
+        uid: `${evenement.id}@companyos`,
+      });
+      const nom = `invitation-${evenement.date}-${evenement.titre
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[̀-ͯ]/g, "")
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "")}.ics`;
+      const node = await saveToCloud(
+        new Blob([ics], { type: "text/calendar;charset=utf-8" }),
+        nom,
+        { folder: "Agenda" },
+      );
+      composerCourriel({
+        sujet: `Invitation : ${evenement.titre} — ${D.dateLisible(evenement.date)}`,
+        texte: [
+          "Bonjour,",
+          "",
+          `Vous êtes invité(e) : ${evenement.titre}`,
+          `Le ${D.dateLisible(evenement.date)}${evenement.heure ? ` à ${evenement.heure}` : ""}${evenement.detail ? ` — ${evenement.detail}` : ""}.`,
+          "",
+          "La pièce jointe ajoute le rendez-vous à votre calendrier d'un clic.",
+          "",
+          "Cordialement,",
+          session.user?.name || "",
+        ].join("\n"),
+        pieces: [{ id: node.id, nom: node.name }],
+      });
+    } catch (e) {
+      modal.alert({ title: "Invitation impossible", message: e.message, tone: "error" });
+    } finally {
+      setOccupe(false);
+    }
+  };
+
   // ---- Rendu --------------------------------------------------------------
 
   if (!ouvert) {
@@ -286,7 +331,13 @@ function AgendaApp() {
               <div className="agdVide">Rien de prévu ce jour.</div>
             )}>
               {evenementsDuJour.map((e) => (
-                <Evenement key={e.id} e={e} onActiver={() => activer(e)} onSupprimer={() => supprimer(e)} />
+                <Evenement
+                  key={e.id}
+                  e={e}
+                  onActiver={() => activer(e)}
+                  onSupprimer={() => supprimer(e)}
+                  onInviter={() => inviter(e)}
+                />
               ))}
             </Contenu>
           </div>
@@ -325,7 +376,7 @@ function AgendaApp() {
 // Une ligne d'événement dans le détail du jour.
 // ---------------------------------------------------------------------------
 
-const Evenement = ({ e, onActiver, onSupprimer }) => (
+const Evenement = ({ e, onActiver, onSupprimer, onInviter }) => (
   <div className="agdEvt" style={{ "--c": D.FAMILLES[e.famille].couleur }}>
     <div className="agdEvtCorps handcr" onClick={onActiver}>
       <div className="agdEvtHaut">
@@ -346,9 +397,18 @@ const Evenement = ({ e, onActiver, onSupprimer }) => (
         <Icon fafa="faArrowUpRightFromSquare" width={11} />
       </span>
     ) : (
-      <button className="agdEvtSuppr handcr" title="Supprimer" onClick={onSupprimer}>
-        <Icon fafa="faTrashCan" width={11} />
-      </button>
+      <>
+        <button
+          className="agdEvtSuppr handcr"
+          title="Inviter par mail (.ics)"
+          onClick={onInviter}
+        >
+          <Icon fafa="faEnvelope" width={11} />
+        </button>
+        <button className="agdEvtSuppr handcr" title="Supprimer" onClick={onSupprimer}>
+          <Icon fafa="faTrashCan" width={11} />
+        </button>
+      </>
     )}
   </div>
 );

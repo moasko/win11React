@@ -45,3 +45,4 @@ export const moduleById = Object.fromEntries(
   tous.map((mod) => [mod.id || mod.icon, mod]),
 );
 
+

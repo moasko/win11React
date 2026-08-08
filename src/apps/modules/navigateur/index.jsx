@@ -39,6 +39,8 @@ import { api, BASE_URL } from "../../../api/client";
 import { ensureRootFolder } from "../../cloud";
 import { modal } from "../../modalRequest";
 import { notifier } from "../../notifications";
+import { composerCourriel } from "../../courrielRequest";
+import { analyserMailto, estMailto } from "../../mailto";
 import { ouvrirDossier } from "../../explorerRequest";
 import { ouvrirFichier } from "../../openRequest";
 import { Contenu, useChargement } from "../../chargement";
@@ -161,6 +163,13 @@ function NavigateurApp() {
   /// permet d'expliquer un refus au lieu d'afficher du vide.
   const aller = useCallback(
     async (href, { historiser = true } = {}) => {
+      // Une adresse mailto: n'est pas une page : elle ouvre le Courrier,
+      // prérempli, et l'onglet reste où il est.
+      if (estMailto(href)) {
+        composerCourriel(analyserMailto(href));
+        return;
+      }
+
       majOnglet({ etat: "chargement", href, saisie: href, message: "" });
 
       let info;
@@ -216,6 +225,13 @@ function NavigateurApp() {
   /// Ce que l'utilisateur a tapé. Une recherche ne s'encadre pas : aucun
   /// moteur ne l'autorise, donc elle part dans un vrai onglet.
   const valider = (saisie) => {
+    // Une adresse mailto: saisie dans la barre ouvre le Courrier — avant
+    // même l'interprétation, qui la prendrait pour une recherche.
+    if (estMailto(saisie)) {
+      composerCourriel(analyserMailto(saisie));
+      return;
+    }
+
     const intention = interpreter(saisie);
     if (!intention) return;
 

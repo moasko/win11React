@@ -11,6 +11,8 @@ import auditRoutes from "./routes/audit.js";
 import notificationRoutes from "./routes/notifications.js";
 import webRoutes from "./routes/web.js";
 import billingRoutes from "./routes/billing.js";
+import courrierRoutes from "./routes/courrier.js";
+import { demarrerRelances } from "./relances.js";
 
 const app = Fastify({ logger: true });
 
@@ -36,6 +38,7 @@ await app.register(auditRoutes, { prefix: "/api/audit" });
 await app.register(notificationRoutes, { prefix: "/api/notifications" });
 await app.register(webRoutes, { prefix: "/api/web" });
 await app.register(billingRoutes, { prefix: "/api/facturation" });
+await app.register(courrierRoutes, { prefix: "/api/courrier" });
 
 const shutdown = async () => {
   await app.close();
@@ -48,6 +51,8 @@ process.on("SIGTERM", shutdown);
 
 try {
   await app.listen({ port: env.port, host: "0.0.0.0" });
+  // Le moteur de relances de factures — voir src/relances.js.
+  demarrerRelances();
 } catch (err) {
   app.log.error(err);
   process.exit(1);

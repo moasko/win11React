@@ -63,7 +63,33 @@ travail depuis l'écran d'inscription — son créateur en devient le
 propriétaire (formule Découverte ; la formule se change dans
 Paramètres → Formule et tarifs).
 
-## 6. Données et sauvegardes
+## 6. Courriels (invitations)
+
+CompanyOS **envoie** des mails — il n'en reçoit pas. Quand un relais SMTP
+est configuré, chaque invitation d'équipe part par mail avec son code ;
+sans relais, l'administrateur transmet le code lui-même et rien ne casse.
+
+Variables à ajouter dans **Environment** :
+
+| Variable | Exemple |
+|---|---|
+| `SMTP_HOST` | `smtp-relay.brevo.com` |
+| `SMTP_PORT` | `587` (STARTTLS) ou `465` (TLS) |
+| `SMTP_USER` | l'identifiant du relais |
+| `SMTP_PASS` | la clé SMTP |
+| `MAIL_FROM` | `CompanyOS <no-reply@mondomaine.com>` |
+
+N'importe quel relais convient : Brevo (300 mails/jour gratuits), Resend,
+Mailgun, un Gmail professionnel. Chez le fournisseur, validez le domaine
+d'envoi (SPF + DKIM) pour ne pas finir en indésirable.
+
+> **Pourquoi pas un serveur mail complet sur le VPS ?** Recevoir du
+> courrier est un métier : la plupart des hébergeurs bloquent le port 25,
+> et la réputation d'une IP neuve envoie tout en spam. Si vous y tenez,
+> un `docker-mailserver` séparé peut fournir le relais SMTP ci-dessus —
+> mais un relais géré coûte zéro et arrive dans la boîte de réception.
+
+## 7. Données et sauvegardes
 
 Deux volumes portent tout l'état :
 
@@ -75,7 +101,7 @@ PostgreSQL vers un stockage S3. Pour les fichiers, archivez le volume
 `storage-data` (le chemin réel est visible dans **Volumes**) — un `tar`
 planifié vers le même bucket suffit.
 
-## 7. Mises à jour
+## 8. Mises à jour
 
 `git push`, puis **Deploy** (ou activez l'auto-deploy par webhook dans
 l'onglet **Deployments**). Les migrations s'appliquent au démarrage ; les

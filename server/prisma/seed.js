@@ -183,6 +183,15 @@ const apps = [
     kind: "NATIVE",
   },
   {
+    slug: "courrier",
+    name: "Courrier",
+    description:
+      "Écrivez à vos clients sans quitter l'OS : votre propre relais SMTP, des pièces jointes prises dans le cloud, et un historique de tout ce qui part. Les autres applications s'en servent aussi — une facture s'envoie par mail d'un clic.",
+    icon: "courrier",
+    category: "Gestion",
+    kind: "NATIVE",
+  },
+  {
     slug: "signature",
     name: "Signature",
     description:

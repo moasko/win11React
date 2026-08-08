@@ -277,6 +277,74 @@ export const compteParJour = (evenements, jours) => {
   return m;
 };
 
+// ---------------------------------------------------------------------------
+// Invitations au format iCalendar (.ics)
+// ---------------------------------------------------------------------------
+//
+// Le format que tous les calendriers comprennent — Outlook, Gmail, un
+// téléphone. Un événement de l'agenda devient une pièce jointe .ics : le
+// destinataire clique, son calendrier propose d'ajouter le rendez-vous.
+
+/// Échappe un texte pour un champ iCalendar : virgules, points-virgules
+/// et retours à la ligne ont un sens dans le format.
+const echapperIcs = (texte) =>
+  String(texte || "")
+    .replace(/\\/g, "\\\\")
+    .replace(/;/g, "\\;")
+    .replace(/,/g, "\\,")
+    .replace(/\r?\n/g, "\\n");
+
+const compacte = (iso) => String(iso).replace(/-/g, "");
+
+/// Le fichier .ics d'un événement de l'agenda.
+///
+/// Un événement à heure donnée dure une heure par défaut — c'est la
+/// convention des calendriers, modifiable par le destinataire. Sans
+/// heure, c'est une journée entière (ou une plage si `fin` est posée).
+/// Les heures sont « flottantes » (sans fuseau) : un rendez-vous à 9 h
+/// est à 9 h, où que soit la personne — le bon choix pour des équipes qui
+/// travaillent dans le même pays.
+export const icsDe = (evenement, { organisateur = "CompanyOS", uid } = {}) => {
+  const { date, fin, heure, titre, detail } = evenement;
+  const lignes = [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//CompanyOS//Agenda//FR",
+    "METHOD:REQUEST",
+    "BEGIN:VEVENT",
+    `UID:${uid || `${compacte(date)}-${Math.abs([...String(titre)].reduce((h, c) => h * 31 + c.charCodeAt(0), 7)) % 1e9}@companyos`}`,
+    `DTSTAMP:${compacte(new Date().toISOString().slice(0, 10))}T000000Z`,
+  ];
+
+  if (heure) {
+    const [h, m] = heure.split(":").map(Number);
+    const debut = `${compacte(date)}T${String(h).padStart(2, "0")}${String(m).padStart(2, "0")}00`;
+    const finH = `${compacte(date)}T${String(h + 1).padStart(2, "0")}${String(m).padStart(2, "0")}00`;
+    lignes.push(`DTSTART:${debut}`, `DTEND:${finH}`);
+  } else {
+    // Journée(s) entière(s) : DTEND est exclusif — le lendemain du dernier
+    // jour couvert.
+    const dernier = fin || date;
+    const lendemain = new Date(`${dernier}T00:00:00Z`);
+    lendemain.setUTCDate(lendemain.getUTCDate() + 1);
+    lignes.push(
+      `DTSTART;VALUE=DATE:${compacte(date)}`,
+      `DTEND;VALUE=DATE:${compacte(lendemain.toISOString().slice(0, 10))}`,
+    );
+  }
+
+  lignes.push(`SUMMARY:${echapperIcs(titre)}`);
+  if (detail) lignes.push(`LOCATION:${echapperIcs(detail)}`);
+  lignes.push(
+    `DESCRIPTION:${echapperIcs(`Invitation envoyée depuis l'agenda de ${organisateur}.`)}`,
+    "END:VEVENT",
+    "END:VCALENDAR",
+  );
+
+  // Le format exige des fins de ligne CRLF.
+  return lignes.join("\r\n") + "\r\n";
+};
+
 export const MOIS_FR = [
   "janvier", "février", "mars", "avril", "mai", "juin",
   "juillet", "août", "septembre", "octobre", "novembre", "décembre",

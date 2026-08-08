@@ -91,6 +91,13 @@ export const api = {
   changerFormule: (plan) =>
     request("/facturation/formule", { method: "PUT", body: { plan } }),
 
+  // Courrier sortant de l'espace : réglages SMTP (admin) et envoi.
+  courrierReglages: () => request("/courrier/reglages"),
+  courrierEnregistrerReglages: (data) =>
+    request("/courrier/reglages", { method: "PUT", body: data }),
+  courrierEnvoyer: (data) =>
+    request("/courrier/envoyer", { method: "POST", body: data }),
+
   catalog: () => request("/apps/catalog"),
   installedApps: () => request("/apps/installed"),
   /// `version` est celle que le shell livre : c'est lui qui porte le code,

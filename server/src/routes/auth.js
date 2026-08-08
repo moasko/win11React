@@ -10,6 +10,7 @@ import {
 } from "../auth.js";
 import { journaliser, journaliserPour } from "../audit.js";
 import { formuleDe } from "../formules.js";
+import { envoyerMail, mailInvitation } from "../mail.js";
 
 const registerSchema = z.object({
   company: z.string().min(2),
@@ -470,7 +471,19 @@ export default async function authRoutes(app) {
 
       await journaliser(request, "invitation.envoi", email, { role: parsed.data.role });
 
-      return reply.code(201).send(serialize(invitation));
+      // Le code part aussi par mail quand un relais SMTP est configuré.
+      // Sinon — ou si l'envoi échoue — l'administrateur transmet le code
+      // lui-même, comme avant : l'invitation n'attend pas le courrier.
+      const contenu = mailInvitation({
+        espace: request.user.tenant?.name || "votre entreprise",
+        invitant: request.user.name,
+        code: invitation.code,
+        role: invitation.role,
+        urlOs: env.urlPublique,
+      });
+      const mailEnvoye = await envoyerMail({ a: email, ...contenu });
+
+      return reply.code(201).send(serialize({ ...invitation, mailEnvoye }));
     },
   );
 

@@ -25,6 +25,7 @@ import { HoteSelecteurProduit } from "./apps/SelecteurProduit";
 import { HoteSelecteurClient } from "./apps/SelecteurClient";
 import { HoteMenuContextuel } from "./apps/MenuContextuel";
 import { ecouterLesCopies } from "./apps/clipboard";
+import { intercepterMailto } from "./apps/mailto";
 import { demarrerSyncNotifications } from "./apps/notifications";
 import { CustomApp } from "./apps/CustomApp";
 import {
@@ -128,6 +129,9 @@ function App() {
   // Historique du presse-papiers : on écoute les copies faites partout dans
   // l'OS. L'historique reste local au navigateur — voir src/apps/clipboard.js.
   useEffect(() => ecouterLesCopies(), []);
+
+  // Les liens mailto: de toute l'interface ouvrent le Courrier.
+  useEffect(() => intercepterMailto(), []);
 
   // Notifications de l'espace de travail. La synchronisation démarre une
   // fois pour toutes : sans session elle ne fait rien, et la connexion la

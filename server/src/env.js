@@ -21,4 +21,15 @@ export const env = {
   defaultTenantQuota: BigInt(
     process.env.DEFAULT_TENANT_QUOTA || 5 * 1024 * 1024 * 1024,
   ),
+
+  // Relais SMTP sortant — facultatif. Sans SMTP_HOST, aucun mail ne part
+  // et les invitations fonctionnent par code, comme toujours.
+  smtpHost: process.env.SMTP_HOST || "",
+  smtpPort: Number(process.env.SMTP_PORT || 587),
+  smtpUser: process.env.SMTP_USER || "",
+  smtpPass: process.env.SMTP_PASS || "",
+  mailFrom: process.env.MAIL_FROM || "CompanyOS <no-reply@localhost>",
+  // L'adresse publique du front, glissée dans les mails pour que le
+  // destinataire sache où aller. En pratique : la même que CORS_ORIGIN.
+  urlPublique: process.env.PUBLIC_URL || process.env.CORS_ORIGIN || "",
 };

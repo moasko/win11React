@@ -5,6 +5,7 @@ import { Icon } from "../../../utils/general";
 import { api } from "../../../api/client";
 import { saveAs } from "../../cloud";
 import { modal } from "../../modalRequest";
+import { composerCourriel } from "../../courrielRequest";
 import { envoyerA } from "../../notifications";
 import { Auteur } from "../../Auteur";
 import { choisirClient, choisirProduit } from "../../referentiel";
@@ -510,7 +511,29 @@ function FacturationApp() {
             : e.label,
       });
       const node = await saveAs(blob, `${draft.numero}.pdf`, { folder: "Facturation" });
-      if (node) flash(`« ${node.name} » enregistré dans l'Explorateur`);
+      if (node) {
+        flash(`« ${node.name} » enregistré dans l'Explorateur`);
+        // Le PDF est dans le cloud : on propose de l'envoyer au client par
+        // l'app Courrier — brouillon prérempli, l'utilisateur relit avant
+        // d'envoyer.
+        const envoyer = await modal.confirm({
+          title: "Envoyer au client ?",
+          message: draft.clientEmail
+            ? `Ouvrir un courriel à ${draft.clientEmail}, avec « ${node.name} » en pièce jointe.`
+            : `Ouvrir un courriel avec « ${node.name} » en pièce jointe — la fiche client n'a pas d'adresse.`,
+          confirmLabel: "Écrire le courriel",
+          cancelLabel: "Plus tard",
+        });
+        if (envoyer) {
+          composerCourriel({
+            a: draft.clientEmail || "",
+            sujet: `${TYPES[draft.type].label} ${draft.numero} — ${session.tenant?.name || ""}`.trim(),
+            texte: `Bonjour,\n\nVeuillez trouver ci-joint ${draft.type === "devis" ? "notre devis" : "notre facture"} ${draft.numero}.\n\nCordialement,\n${session.user?.name || ""}`,
+            pieceJointeId: node.id,
+            pieceJointeNom: node.name,
+          });
+        }
+      }
     } catch (err) {
       flash(err.message);
     } finally {

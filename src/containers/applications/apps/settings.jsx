@@ -56,6 +56,9 @@ const VERSION = "0.1.0";
 const ACTIONS = {
   "espace.creation": ["a créé l'espace de travail", "faBuilding"],
   "espace.formule": ["a changé la formule de l'espace", "faCreditCard"],
+  "courrier.envoi": ["a envoyé un courriel à", "faPaperPlane"],
+  "courrier.reglages": ["a modifié le relais SMTP", "faEnvelope"],
+  "courrier.relance": ["relance automatique envoyée à", "faBell"],
   "espace.renommage": ["a renommé l'espace", "faPen"],
   "session.connexion": ["s'est connecté", "faRightToBracket"],
   "compte.motdepasse": ["a changé son mot de passe", "faKey"],

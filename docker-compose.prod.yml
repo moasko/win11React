@@ -42,6 +42,14 @@ services:
       STORAGE_DRIVER: local
       STORAGE_LOCAL_PATH: /data/storage
       DEFAULT_TENANT_QUOTA: ${DEFAULT_TENANT_QUOTA:-5368709120}
+      # Relais SMTP sortant (invitations par mail). Facultatif : sans
+      # SMTP_HOST, les invitations fonctionnent par code uniquement.
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      MAIL_FROM: ${MAIL_FROM:-}
+      PUBLIC_URL: ${CORS_ORIGIN}
     volumes:
       - storage-data:/data/storage
     expose:
